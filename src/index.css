@@ -1,0 +1,51 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  font-family: Inter, system-ui, sans-serif;
+  background-color: #e0e5ec;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background: #e0e5ec;
+  color: #1f2937;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-smooth: always;
+}
+
+.neu-card {
+  background: #e0e5ec;
+  box-shadow: 6px 6px 12px #b8b9be, -6px -6px 12px #ffffff;
+  border-radius: 1rem;
+}
+
+.neu-card-inset {
+  background: #e0e5ec;
+  box-shadow: inset 4px 4px 8px #b8b9be, inset -4px -4px 8px #ffffff;
+  border-radius: 1rem;
+}
+
+.neu-button {
+  background: #e0e5ec;
+  box-shadow: 6px 6px 12px #b8b9be, -6px -6px 12px #ffffff;
+  border: 1px solid transparent;
+}
+
+.neu-button:active {
+  box-shadow: inset 4px 4px 8px #b8b9be, inset -4px -4px 8px #ffffff;
+}
