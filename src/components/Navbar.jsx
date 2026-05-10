@@ -3,12 +3,43 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { FaBell, FaBars, FaSignOutAlt, FaTimes, FaUserFriends } from 'react-icons/fa';
 import { useAuthContext } from '../context/AuthContext';
 import { toast } from 'react-hot-toast';
+import useSocket from '../hooks/useSocket';
+import { useEffect } from 'react';
 
 const Navbar = () => {
   const { user, logout } = useAuthContext();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
+  const socket = useSocket();
+
+  useEffect(() => {
+    if (!socket) return;
+    
+    const handleRoomInvite = (data) => {
+      toast(
+        (t) => (
+          <div>
+            <p className="font-semibold text-sm">{data.hostName} invited you to a room!</p>
+            <div className="mt-3 flex gap-2">
+              <button 
+                onClick={() => { toast.dismiss(t.id); navigate(`/game/${data.roomId}`); }}
+                className="rounded bg-[#a78bfa] px-4 py-2 text-xs font-semibold text-white hover:bg-[#8b5cf6]"
+              >Join Room</button>
+              <button 
+                onClick={() => toast.dismiss(t.id)}
+                className="rounded bg-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-300"
+              >Decline</button>
+            </div>
+          </div>
+        ),
+        { duration: 15000, position: 'top-center' }
+      );
+    };
+
+    socket.on('room-invite', handleRoomInvite);
+    return () => socket.off('room-invite', handleRoomInvite);
+  }, [socket, navigate]);
 
   const avatarUrl =
     user?.avatar ||

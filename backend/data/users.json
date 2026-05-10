@@ -7,7 +7,7 @@
     "password": "$2b$10$zyFm6bS2c/UFsHPUAl5dVuF8jWY2aXIRZqCv3z6Butn8d3Y097T1a",
     "avatar": "https://ui-avatars.com/api/?name=Fito&background=A78BFA&color=ffffff",
     "joinDate": "10/5/2026",
-    "gamesPlayed": 0,
+    "gamesPlayed": 1,
     "winRate": 0,
     "score": 0,
     "favoriteGenre": "Pop Indo",
@@ -23,13 +23,14 @@
     "name": "Fanszer_",
     "avatar": "https://lh3.googleusercontent.com/a/ACg8ocL1fk9lFByul8rPMKK0Xz5-u2eSY6quROD0Ct3RsSa0WrQpCb95=s96-c",
     "joinDate": "11/5/2026",
-    "gamesPlayed": 0,
-    "winRate": 0,
-    "score": 0,
+    "gamesPlayed": 1,
+    "winRate": 100,
+    "score": 100,
     "favoriteGenre": "Pop Indo",
     "outgoingRequests": [],
     "friends": [
       "usr_1778424035589"
-    ]
+    ],
+    "wins": 1
   }
 ]

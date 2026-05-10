@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { FaLightbulb, FaVolumeUp } from 'react-icons/fa';
+import { FaLightbulb, FaVolumeUp, FaTimes } from 'react-icons/fa';
 import Timer from '../components/Timer';
 import ScoreBoard from '../components/ScoreBoard';
 import useSocket from '../hooks/useSocket';
 import { useAuthContext } from '../context/AuthContext';
+import { getFriends } from '../services/friendService';
+import { toast } from 'react-hot-toast';
 
 const USE_MOCK = false;
 const MOCK_AUDIO_URL = 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3';
@@ -46,6 +48,22 @@ const GamePage = () => {
   const [hintOpen, setHintOpen] = useState(false);
   const [scoreFlashIds, setScoreFlashIds] = useState([]);
   const [scoreboardOpen, setScoreboardOpen] = useState(false);
+  const [inviteModalOpen, setInviteModalOpen] = useState(false);
+  const [friendsList, setFriendsList] = useState([]);
+
+  useEffect(() => {
+    if (inviteModalOpen) {
+      getFriends().then(setFriendsList).catch(console.error);
+    }
+  }, [inviteModalOpen]);
+
+  const handleInviteFriend = (friendId) => {
+    if (socket) {
+      socket.emit('send-invite', { friendId, roomId });
+      toast.success('Invite sent!');
+    }
+    setInviteModalOpen(false);
+  };
 
   useEffect(() => {
     let interval = null;
@@ -231,14 +249,24 @@ const GamePage = () => {
                 <div className="flex items-center gap-2 rounded-full bg-[#e0e5ec] px-4 py-3 shadow-neu-sm text-sm font-semibold text-[#4a4a6a]">
                   <FaVolumeUp /> {statusMessage}
                 </div>
-                {roomData.host === (user?.username || socket?.id) && countdown === null && round.roundNumber === 0 && (
-                  <button 
-                    onClick={handleStartGame}
-                    className="rounded-full bg-[#a78bfa] px-6 py-3 text-sm font-semibold text-white shadow-neu hover:bg-[#8b5cf6]"
-                  >
-                    Start Game
-                  </button>
-                )}
+                <div className="flex flex-wrap items-center gap-3">
+                  {roomData.host === (user?.username || socket?.id) && countdown === null && round.roundNumber === 0 && (
+                    <>
+                      <button 
+                        onClick={() => setInviteModalOpen(true)}
+                        className="rounded-full bg-white px-6 py-3 text-sm font-semibold text-[#4a4a6a] shadow-neu hover:shadow-neu-sm"
+                      >
+                        Invite Friends
+                      </button>
+                      <button 
+                        onClick={handleStartGame}
+                        className="rounded-full bg-[#a78bfa] px-6 py-3 text-sm font-semibold text-white shadow-neu hover:bg-[#8b5cf6]"
+                      >
+                        Start Game
+                      </button>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -324,6 +352,29 @@ const GamePage = () => {
           {scoreboardOpen && <ScoreBoard scores={displayedScores} flashIds={scoreFlashIds} />}
         </div>
       </div>
+
+      {inviteModalOpen && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/30 px-4 py-6">
+          <div className="w-full max-w-md rounded-[2rem] bg-[#e0e5ec] p-6 shadow-neu">
+            <div className="mb-6 flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-[#4a4a6a]">Invite Friends</h2>
+              <button onClick={() => setInviteModalOpen(false)} className="rounded-full bg-[#f5f7fb] p-3 text-[#4a4a6a] shadow-neu-sm">
+                <FaTimes />
+              </button>
+            </div>
+            <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
+              {friendsList.length > 0 ? friendsList.map(f => (
+                <div key={f.id} className="flex items-center justify-between bg-[#f5f7fb] p-3 rounded-2xl shadow-neu-sm">
+                  <span className="font-semibold text-[#4a4a6a]">{f.name}</span>
+                  <button onClick={() => handleInviteFriend(f.id)} className="text-xs bg-[#a78bfa] text-white px-3 py-1 rounded-full hover:bg-[#8b5cf6]">Invite</button>
+                </div>
+              )) : (
+                <p className="text-sm text-center text-slate-500 py-4">No friends available to invite.</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

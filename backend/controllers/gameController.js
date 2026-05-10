@@ -78,6 +78,13 @@ export const setupSocketHandlers = (io) => {
       }
     });
 
+    socket.on('send-invite', ({ friendId, roomId }) => {
+      io.to(friendId).emit('room-invite', {
+        roomId,
+        hostName: socket.user ? socket.user.name : 'A friend'
+      });
+    });
+
     socket.on('start-game', async ({ roomId }) => {
       const room = activeRooms.get(roomId);
       if (!room || room.gameState === 'playing') return;

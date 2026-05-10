@@ -89,8 +89,8 @@ const LobbyPage = () => {
                       <p className="font-semibold text-[#4a4a6a]">{friend.name}</p>
                       <p className="text-xs text-slate-500">{friend.online ? 'Online' : 'Offline'}</p>
                     </div>
-                    <button onClick={() => toast.success(`Invite sent to ${friend.name}!`)} className="rounded-full bg-[#a78bfa] px-3 py-2 text-xs font-semibold text-white hover:bg-[#8b5cf6]">
-                      Invite
+                    <button onClick={() => navigate(`/chat/${friend.id}`)} className="rounded-full bg-[#a78bfa] px-3 py-2 text-xs font-semibold text-white hover:bg-[#8b5cf6]">
+                      Chat
                     </button>
                   </div>
                 ))

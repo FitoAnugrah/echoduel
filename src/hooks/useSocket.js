@@ -1,26 +1,27 @@
 import { useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
 
+let globalSocket = null;
+
 const useSocket = () => {
-    const [socket, setSocket] = useState(null);
+    const [socket, setSocket] = useState(globalSocket);
 
     useEffect(() => {
-        const token = localStorage.getItem('echoduel_token');
-        if (!token) {
-            return undefined;
+        if (globalSocket) {
+            setSocket(globalSocket);
+            return;
         }
 
-        const socketInstance = io(
+        const token = localStorage.getItem('echoduel_token');
+        if (!token) return;
+
+        globalSocket = io(
             import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000', {
                 auth: { token },
                 transports: ['websocket'],
             });
 
-        setSocket(socketInstance);
-
-        return () => {
-            socketInstance.disconnect();
-        };
+        setSocket(globalSocket);
     }, []);
 
     return socket;
