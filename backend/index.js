@@ -3,6 +3,7 @@ import http from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import jwt from 'jsonwebtoken';
 
 dotenv.config();
 
@@ -48,6 +49,22 @@ const io = new Server(server, {
   cors: corsOptions,
 });
 
+io.use((socket, next) => {
+  const token = socket.handshake.auth.token;
+  if (!token) return next(); // Allow connection but without user attached
+  jwt.verify(token, process.env.JWT_SECRET || 'echoduel_super_secret_key', (err, user) => {
+    if (!err) socket.user = user;
+    next();
+  });
+});
+
+io.on('connection', (socket) => {
+  if (socket.user) {
+    socket.join(socket.user.id); // Personal room for private messages
+  }
+});
+
+app.set('io', io);
 setupSocketHandlers(io);
 
 // Basic route to check if server is running

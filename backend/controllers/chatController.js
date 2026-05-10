@@ -71,5 +71,14 @@ export const sendMessage = (req, res) => {
   chat.messages.push(newMessage);
   saveChats(chats);
 
+  // Real-time emission
+  const io = req.app.get('io');
+  if (io) {
+    io.to(friendId).emit('new-message', {
+      ...newMessage,
+      senderId: userId
+    });
+  }
+
   res.status(201).json({ ...newMessage, isOwn: true });
 };

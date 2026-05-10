@@ -11,7 +11,8 @@
     "winRate": 0,
     "score": 0,
     "favoriteGenre": "Pop Indo",
-    "incomingRequests": [
+    "incomingRequests": [],
+    "friends": [
       "usr_1778429075084"
     ]
   },
@@ -26,7 +27,8 @@
     "winRate": 0,
     "score": 0,
     "favoriteGenre": "Pop Indo",
-    "outgoingRequests": [
+    "outgoingRequests": [],
+    "friends": [
       "usr_1778424035589"
     ]
   }

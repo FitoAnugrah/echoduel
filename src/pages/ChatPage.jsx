@@ -5,6 +5,8 @@ import InputField from '../components/InputField';
 import Button from '../components/Button';
 import { getConversations, getChatHistory, sendMessage } from '../services/friendService';
 import { useAuthContext } from '../context/AuthContext';
+import useSocket from '../hooks/useSocket';
+
 const ChatPage = () => {
   const { friendId } = useParams();
   const navigate = useNavigate();
@@ -14,6 +16,7 @@ const ChatPage = () => {
   const [newNotifications, setNewNotifications] = useState({});
   const { user } = useAuthContext();
   const [conversations, setConversations] = useState([]);
+  const socket = useSocket();
 
   useEffect(() => {
     const fetchConvos = async () => {
@@ -53,6 +56,27 @@ const ChatPage = () => {
     };
     fetchHistory();
   }, [activeFriend, conversations]);
+
+  useEffect(() => {
+    if (!socket) return;
+    
+    const handleNewMessage = (msg) => {
+      if (activeFriend === msg.senderId) {
+        setHistory(prev => [...prev, {
+          id: msg.id,
+          senderName: conversations.find(c => c.friendId === activeFriend)?.name || 'Friend',
+          message: msg.text,
+          timestamp: msg.timestamp,
+          isSent: false
+        }]);
+      } else {
+        setNewNotifications(prev => ({ ...prev, [msg.senderId]: (prev[msg.senderId] || 0) + 1 }));
+      }
+    };
+
+    socket.on('new-message', handleNewMessage);
+    return () => socket.off('new-message', handleNewMessage);
+  }, [socket, activeFriend, conversations]);
 
   const activeConversation = useMemo(
     () => conversations.find((conversation) => conversation.friendId === activeFriend) || null,
@@ -126,8 +150,11 @@ const ChatPage = () => {
               >
                 <div className="flex items-center gap-3">
                   <img src={conversation.avatar} alt={conversation.name} className="h-12 w-12 rounded-full" />
-                  <div className="min-w-0">
-                    <p className="truncate font-semibold text-slate-900">{conversation.name}</p>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex justify-between items-center">
+                      <p className="truncate font-semibold text-slate-900">{conversation.name}</p>
+                      <p className="text-[10px] text-slate-400">{conversation.time}</p>
+                    </div>
                     <p className="truncate text-sm text-slate-500">{conversation.lastMessage}</p>
                   </div>
                 </div>

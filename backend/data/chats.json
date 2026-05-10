@@ -1,1 +1,35 @@
-[]
+[
+  {
+    "id": "chat_1778430779354",
+    "participants": [
+      "usr_1778424035589",
+      "usr_1778429075084"
+    ],
+    "messages": [
+      {
+        "id": "msg_1778430779355",
+        "senderId": "usr_1778424035589",
+        "text": "halo",
+        "timestamp": "00.32"
+      },
+      {
+        "id": "msg_1778430799221",
+        "senderId": "usr_1778429075084",
+        "text": "halo",
+        "timestamp": "00.33"
+      },
+      {
+        "id": "msg_1778430836727",
+        "senderId": "usr_1778429075084",
+        "text": "haha",
+        "timestamp": "00.33"
+      },
+      {
+        "id": "msg_1778430904424",
+        "senderId": "usr_1778424035589",
+        "text": "halo",
+        "timestamp": "00.35"
+      }
+    ]
+  }
+]
