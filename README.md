@@ -45,20 +45,20 @@ Karena proyek ini terbagi menjadi Frontend dan Backend, Anda perlu menjalankan k
 ### Langkah-langkah
 1. **Clone repositori ini:**
    ```bash
-     git clone [https://github.com/](https://github.com/)[USERNAME-KALIAN]/echoduel.git
+     git clone [https://github.com/FitoAnugrah/echoduel.git](https://github.com/FitoAnugrah/echoduel.git)
      cd echoduel
   
 2. Jalankan Backend (Server):
-Buka terminal baru, arahkan ke folder backend, dan jalankan server.
+Buka terminal baru, arahkan ke folder backend, instal dependensi, lalu jalankan server-nya:
 
          cd backend
          npm install
-         npm start
+         npm run dev
 
 3.Jalankan Frontend (Client):
 Buka terminal baru lainnya, pastikan berada di folder utama proyek (echoduel), lalu jalankan Vite.
 
-      npm install
-      npm run dev
+         npm install
+         npm run dev
 
 4.Buka tautan lokal yang diberikan oleh Vite (biasanya http://localhost:5173) di browser Anda.
