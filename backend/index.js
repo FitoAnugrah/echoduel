@@ -1,11 +1,9 @@
+import 'dotenv/config';
 import express from 'express';
 import http from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import jwt from 'jsonwebtoken';
-
-dotenv.config();
 
 import authRoutes from './routes/authRoutes.js';
 import roomRoutes from './routes/roomRoutes.js';
@@ -20,8 +18,10 @@ const server = http.createServer(app);
 
 // CORS Configuration
 const corsOptions = {
-  origin: '*', // For development, allow all origins. In production, restrict this.
-  methods: ['GET', 'POST'],
+  origin: process.env.NODE_ENV === 'production' 
+    ? (process.env.CLIENT_URL || 'https://your-production-url.com') 
+    : '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
 };
 
 app.use(cors(corsOptions));

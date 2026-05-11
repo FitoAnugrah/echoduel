@@ -17,7 +17,7 @@ export const getConversations = (req, res) => {
       friendId: otherUserId,
       name: otherUser.name,
       avatar: otherUser.avatar,
-      online: Math.random() > 0.5,
+      online: true,
       lastMessage: lastMessage ? lastMessage.text : 'Start a conversation...',
       time: lastMessage ? lastMessage.timestamp : '',
       unread: 0

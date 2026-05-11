@@ -16,7 +16,7 @@ export const getFriends = (req, res) => {
   // Map friend IDs to user objects
   const friendList = (user.friends || []).map(friendId => {
     const f = users.find(u => u.id === friendId);
-    return f ? { id: f.id, name: f.name, username: f.username, avatar: f.avatar, online: Math.random() > 0.5 } : null;
+    return f ? { id: f.id, name: f.name, username: f.username, avatar: f.avatar, online: true } : null;
   }).filter(Boolean);
 
   res.json(friendList);

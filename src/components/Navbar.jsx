@@ -53,13 +53,24 @@ const Navbar = () => {
         </NavLink>
 
         <div className="hidden flex-1 justify-center sm:flex">
-          <div className="w-full max-w-xl">
+          <form 
+            className="w-full max-w-xl"
+            onSubmit={(e) => {
+              e.preventDefault();
+              const val = e.target.search.value.trim();
+              if (val) {
+                navigate('/friends', { state: { search: val } });
+                e.target.search.value = '';
+              }
+            }}
+          >
             <input
+              name="search"
               type="search"
-              placeholder="Search rooms or friends"
+              placeholder="Search friends..."
               className="w-full rounded-full bg-[#e0e5ec] px-4 py-3 text-[#4a4a6a] shadow-neu-inset outline-none focus:ring-2 focus:ring-[#a78bfa]/30"
             />
-          </div>
+          </form>
         </div>
 
         <div className="hidden items-center gap-3 sm:flex">

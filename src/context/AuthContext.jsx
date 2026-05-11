@@ -1,20 +1,14 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useState } from 'react';
+import { disconnectSocket } from '../hooks/useSocket';
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [token, setToken] = useState(localStorage.getItem('echoduel_token'));
+  const [token, setToken] = useState(() => localStorage.getItem('echoduel_token'));
   const [user, setUser] = useState(() => {
     const storedUser = localStorage.getItem('echoduel_user');
     return storedUser ? JSON.parse(storedUser) : null;
   });
-
-  useEffect(() => {
-    const currentToken = localStorage.getItem('echoduel_token');
-    const storedUser = localStorage.getItem('echoduel_user');
-    setToken(currentToken);
-    setUser(storedUser ? JSON.parse(storedUser) : null);
-  }, []);
 
   const login = (newToken, userData) => {
     localStorage.setItem('echoduel_token', newToken);
@@ -34,6 +28,7 @@ export function AuthProvider({ children }) {
     localStorage.removeItem('echoduel_user');
     setToken(null);
     setUser(null);
+    disconnectSocket();
     window.location.href = '/login';
   };
 

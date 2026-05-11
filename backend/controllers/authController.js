@@ -2,9 +2,10 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { OAuth2Client } from 'google-auth-library';
 import { getUsers, saveUsers } from '../utils/db.js';
-
-const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 const JWT_SECRET = process.env.JWT_SECRET || 'echoduel_super_secret_key';
+if (!process.env.JWT_SECRET) {
+  console.warn("⚠️ WARNING: JWT_SECRET is not set in the environment. Using fallback key. This is insecure for production!");
+}
 
 export const register = async (req, res) => {
   try {
@@ -91,6 +92,8 @@ export const googleLogin = async (req, res) => {
     if (!credential) {
       return res.status(400).json({ message: 'Google credential missing.' });
     }
+
+    const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
     // Verify the Google ID token
     const ticket = await client.verifyIdToken({

@@ -29,9 +29,14 @@ const LobbyPage = () => {
 
   const loadRooms = async () => {
     setLoadingRooms(true);
-    const fetchedRooms = await getRooms(activeGenre);
-    setRooms(fetchedRooms);
-    setLoadingRooms(false);
+    try {
+      const fetchedRooms = await getRooms(activeGenre);
+      setRooms(fetchedRooms);
+    } catch (err) {
+      toast.error('Failed to load rooms');
+    } finally {
+      setLoadingRooms(false);
+    }
   };
 
   useEffect(() => {
@@ -56,7 +61,7 @@ const LobbyPage = () => {
     event.preventDefault();
     setCreatingRoom(true);
 
-    await createRoom({
+    const room = await createRoom({
       host: user?.username || 'Player',
       name: form.name || `${activeGenre} Room`,
       genre: form.genre,
@@ -67,7 +72,7 @@ const LobbyPage = () => {
     setCreatingRoom(false);
     setModalOpen(false);
     setForm({ name: '', genre: 'Pop Indo', difficulty: 'Easy', maxPlayers: '2' });
-    loadRooms();
+    navigate(`/game/${room.id}`);
   };
 
   const handleJoin = async (roomId) => {

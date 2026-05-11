@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import Button from '../components/Button';
 import InputField from '../components/InputField';
 import { useEffect } from 'react';
@@ -12,8 +12,9 @@ const tabs = [
 
 const FriendsPage = () => {
   const navigate = useNavigate();
-  const [tab, setTab] = useState('friends');
-  const [searchQuery, setSearchQuery] = useState('');
+  const location = useLocation();
+  const [tab, setTab] = useState(location.state?.search ? 'find' : 'friends');
+  const [searchQuery, setSearchQuery] = useState(location.state?.search || '');
   const [friends, setFriends] = useState([]);
   const [incoming, setIncoming] = useState([]);
   const [outgoing, setOutgoing] = useState([]);
@@ -35,6 +36,16 @@ const FriendsPage = () => {
     };
     fetchData();
   }, []);
+
+  // Sinkronisasi state tab dan query jika router berubah (e.g. dari Navbar)
+  useEffect(() => {
+    if (location.state?.search) {
+      setTab('find');
+      setSearchQuery(location.state.search);
+      // Hapus state agar tidak terjebak jika re-render
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state?.search]);
 
   useEffect(() => {
     const fetchSearch = async () => {

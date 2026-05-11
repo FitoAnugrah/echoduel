@@ -3,6 +3,13 @@ import { io } from 'socket.io-client';
 
 let globalSocket = null;
 
+export const disconnectSocket = () => {
+    if (globalSocket) {
+        globalSocket.disconnect();
+        globalSocket = null;
+    }
+};
+
 const useSocket = () => {
     const [socket, setSocket] = useState(globalSocket);
 
@@ -13,7 +20,10 @@ const useSocket = () => {
         }
 
         const token = localStorage.getItem('echoduel_token');
-        if (!token) return;
+        if (!token) {
+            setSocket(null);
+            return;
+        }
 
         globalSocket = io(
             import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000', {

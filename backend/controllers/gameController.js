@@ -8,8 +8,22 @@ const isCorrectAnswer = (guess, actual) => {
   if (!guess || !actual) return false;
   const g = guess.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim();
   const a = actual.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim();
-  // Very simple matching: if the guess is within the actual string or vice-versa
-  return a.includes(g) && g.length > 3 || g === a;
+  
+  if (g === a) return true;
+  
+  // Jika tebakan adalah bagian dari jawaban asli, harus minimal 70% dari panjang aslinya
+  if (a.includes(g) && g.length >= a.length * 0.7) return true;
+  
+  // Toleransi typo (maksimal 2 huruf salah jika panjang kata di atas 4)
+  if (g.length === a.length && a.length > 4) {
+    let diff = 0;
+    for(let i = 0; i < a.length; i++) {
+      if(a[i] !== g[i]) diff++;
+    }
+    if (diff <= 2) return true;
+  }
+  
+  return false;
 };
 
 export const setupSocketHandlers = (io) => {
@@ -25,7 +39,7 @@ export const setupSocketHandlers = (io) => {
           id: roomId,
           name: `Room ${roomId}`,
           host: user?.username || socket.id,
-          genre: 'K-Pop', // Default genre for now
+          genre: 'All', // Default genre for uninitialized rooms
           players: [],
           tracks: [],
           currentRound: 0,
@@ -110,7 +124,7 @@ export const setupSocketHandlers = (io) => {
         const points = 100 + (timeRemaining * 10); // Base 100 + time bonus
         
         const scoreEntry = room.scores.find(s => s.id === socket.id);
-        if (scoreEntry && !room.answeredPlayers.has(socket.id)) {
+        if (scoreEntry && room.answeredPlayers && !room.answeredPlayers.has(socket.id)) {
           scoreEntry.score += points;
           room.answeredPlayers.add(socket.id);
           io.to(roomId).emit('score-update', { scores: room.scores });

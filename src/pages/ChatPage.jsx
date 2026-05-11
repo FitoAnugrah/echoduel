@@ -110,6 +110,9 @@ const ChatPage = () => {
 
       setHistory((prev) => [...prev, newMessage]);
       setDraft('');
+      
+      const updatedConvos = await getConversations();
+      setConversations(updatedConvos);
     } catch (err) {
       console.error("Failed to send message");
     }
@@ -145,7 +148,7 @@ const ChatPage = () => {
                 type="button"
                 onClick={() => handleSelectConversation(conversation)}
                 className={`w-full rounded-3xl border p-4 text-left transition ${
-                  activeFriend === conversation.id ? 'border-accent bg-accent/10' : 'border-transparent bg-slate-50 hover:border-slate-200'
+                  activeFriend === conversation.friendId ? 'border-accent bg-accent/10' : 'border-transparent bg-slate-50 hover:border-slate-200'
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -160,8 +163,8 @@ const ChatPage = () => {
                 </div>
                 <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
                   <span>{conversation.online ? 'Online' : 'Offline'}</span>
-                  {newNotifications[conversation.id] ? (
-                    <span className="rounded-full bg-emerald-100 px-2 py-1 text-[10px] font-semibold text-emerald-700">{newNotifications[conversation.id]}</span>
+                  {newNotifications[conversation.friendId] ? (
+                    <span className="rounded-full bg-emerald-100 px-2 py-1 text-[10px] font-semibold text-emerald-700">{newNotifications[conversation.friendId]}</span>
                   ) : null}
                 </div>
               </button>
