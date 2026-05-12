@@ -49,7 +49,7 @@ const useSocket = () => {
       globalSocket = null;
     }
 
-    globalSocket = io(import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000', {
+    globalSocket = io(import.meta.env.VITE_API_URL || 'http://localhost:3000', {
       auth: { token },
       transports: ['websocket'],
       reconnectionAttempts: 5,

@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useAuthContext } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { updateProfile, changePassword } from '../services/authService';
 import api from '../services/api';
 import Button from '../components/Button';
 import InputField from '../components/InputField';
-import { FaCamera } from 'react-icons/fa';
+import { FaCamera, FaEye, FaEyeSlash, FaCheckCircle, FaTimesCircle, FaMoon, FaSun } from 'react-icons/fa';
 import { getAvatarUrl } from '../utils/avatar';
 
 const tabs = [
@@ -17,6 +18,7 @@ const tabs = [
 
 const ProfilePage = ({ initialTab = 'account' }) => {
   const { user, updateUser } = useAuthContext();
+  const { isDark, toggleTheme } = useTheme();
   const [activeTab, setActiveTab] = useState(initialTab);
   const [editMode, setEditMode] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -39,6 +41,8 @@ const ProfilePage = ({ initialTab = 'account' }) => {
   });
   const [settings, setSettings] = useState({ themeMode: 'light', language: 'English' });
   const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
+  const [showPw, setShowPw] = useState({ current: false, new: false, confirm: false });
+  const [passwordError, setPasswordError] = useState('');
 
   useEffect(() => {
     if (!user) return;
@@ -116,13 +120,36 @@ const ProfilePage = ({ initialTab = 'account' }) => {
 
   const handleSavePassword = async (event) => {
     event.preventDefault();
+    setPasswordError('');
+
+    const { currentPassword, newPassword, confirmPassword } = passwordForm;
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      setPasswordError('Semua kolom password wajib diisi.');
+      return;
+    }
+    if (newPassword.length < 8) {
+      setPasswordError('Password baru minimal 8 karakter.');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordError('Password baru dan konfirmasi tidak cocok.');
+      return;
+    }
+    if (currentPassword === newPassword) {
+      setPasswordError('Password baru tidak boleh sama dengan password lama.');
+      return;
+    }
+
     setLoading(true);
     try {
       await changePassword(passwordForm);
-      toast.success('Password changed successfully.');
+      toast.success('Password berhasil diubah! 🔐');
       setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      setPasswordError('');
     } catch (error) {
-      toast.error(error?.response?.data?.message || error?.message || 'Unable to change password.');
+      const msg = error?.response?.data?.message || error?.message || 'Gagal mengubah password.';
+      setPasswordError(msg);
     } finally {
       setLoading(false);
     }
@@ -283,30 +310,96 @@ const ProfilePage = ({ initialTab = 'account' }) => {
 
             {activeTab === 'security' && (
               <form className="space-y-5" onSubmit={handleSavePassword}>
-                <InputField
-                  label="Current password"
-                  value={passwordForm.currentPassword}
-                  onChange={(event) => setPasswordForm((prev) => ({ ...prev, currentPassword: event.target.value }))}
-                  placeholder="Enter current password"
-                  type="password"
-                />
-                <InputField
-                  label="New password"
-                  value={passwordForm.newPassword}
-                  onChange={(event) => setPasswordForm((prev) => ({ ...prev, newPassword: event.target.value }))}
-                  placeholder="Enter new password"
-                  type="password"
-                />
-                <InputField
-                  label="Confirm new password"
-                  value={passwordForm.confirmPassword}
-                  onChange={(event) => setPasswordForm((prev) => ({ ...prev, confirmPassword: event.target.value }))}
-                  placeholder="Confirm new password"
-                  type="password"
-                />
-                <Button type="submit" className="min-w-[140px]">
-                  {loading ? 'Saving...' : 'Change Password'}
-                </Button>
+                <div className="rounded-[2rem] bg-[#f5f7fb] p-5 shadow-neu-sm">
+                  <p className="mb-4 text-sm font-bold text-[#4a4a6a]">Ubah Password</p>
+                  <div className="space-y-4">
+                    {/* Current Password */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-semibold text-slate-700">Password Saat Ini</label>
+                      <div className="relative">
+                        <input
+                          type={showPw.current ? 'text' : 'password'}
+                          value={passwordForm.currentPassword}
+                          onChange={(e) => setPasswordForm((prev) => ({ ...prev, currentPassword: e.target.value }))}
+                          placeholder="Masukkan password saat ini"
+                          className="w-full rounded-xl bg-[#e0e5ec] px-4 py-3 pr-12 text-sm text-[#4a4a6a] shadow-neu-inset outline-none focus:ring-2 focus:ring-[#a78bfa]/30"
+                        />
+                        <button type="button" onClick={() => setShowPw(p => ({ ...p, current: !p.current }))} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#a78bfa] transition-colors">
+                          {showPw.current ? <FaEyeSlash /> : <FaEye />}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* New Password */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-semibold text-slate-700">Password Baru</label>
+                      <div className="relative">
+                        <input
+                          type={showPw.new ? 'text' : 'password'}
+                          value={passwordForm.newPassword}
+                          onChange={(e) => setPasswordForm((prev) => ({ ...prev, newPassword: e.target.value }))}
+                          placeholder="Min. 8 karakter, huruf + angka"
+                          className="w-full rounded-xl bg-[#e0e5ec] px-4 py-3 pr-12 text-sm text-[#4a4a6a] shadow-neu-inset outline-none focus:ring-2 focus:ring-[#a78bfa]/30"
+                        />
+                        <button type="button" onClick={() => setShowPw(p => ({ ...p, new: !p.new }))} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#a78bfa] transition-colors">
+                          {showPw.new ? <FaEyeSlash /> : <FaEye />}
+                        </button>
+                      </div>
+                      {/* Password strength hints */}
+                      {passwordForm.newPassword.length > 0 && (
+                        <div className="mt-2 space-y-1">
+                          <div className={`flex items-center gap-2 text-xs ${passwordForm.newPassword.length >= 8 ? 'text-emerald-600' : 'text-red-500'}`}>
+                            {passwordForm.newPassword.length >= 8 ? <FaCheckCircle /> : <FaTimesCircle />}
+                            <span>Minimal 8 karakter</span>
+                          </div>
+                          <div className={`flex items-center gap-2 text-xs ${/[a-zA-Z]/.test(passwordForm.newPassword) && /[0-9]/.test(passwordForm.newPassword) ? 'text-emerald-600' : 'text-red-500'}`}>
+                            {/[a-zA-Z]/.test(passwordForm.newPassword) && /[0-9]/.test(passwordForm.newPassword) ? <FaCheckCircle /> : <FaTimesCircle />}
+                            <span>Mengandung huruf dan angka</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Confirm Password */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-semibold text-slate-700">Konfirmasi Password Baru</label>
+                      <div className="relative">
+                        <input
+                          type={showPw.confirm ? 'text' : 'password'}
+                          value={passwordForm.confirmPassword}
+                          onChange={(e) => setPasswordForm((prev) => ({ ...prev, confirmPassword: e.target.value }))}
+                          placeholder="Ulangi password baru"
+                          className="w-full rounded-xl bg-[#e0e5ec] px-4 py-3 pr-12 text-sm text-[#4a4a6a] shadow-neu-inset outline-none focus:ring-2 focus:ring-[#a78bfa]/30"
+                        />
+                        <button type="button" onClick={() => setShowPw(p => ({ ...p, confirm: !p.confirm }))} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#a78bfa] transition-colors">
+                          {showPw.confirm ? <FaEyeSlash /> : <FaEye />}
+                        </button>
+                      </div>
+                      {passwordForm.confirmPassword.length > 0 && (
+                        <div className={`flex items-center gap-2 text-xs ${passwordForm.newPassword === passwordForm.confirmPassword ? 'text-emerald-600' : 'text-red-500'}`}>
+                          {passwordForm.newPassword === passwordForm.confirmPassword ? <FaCheckCircle /> : <FaTimesCircle />}
+                          <span>{passwordForm.newPassword === passwordForm.confirmPassword ? 'Password cocok' : 'Password tidak cocok'}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {passwordError && (
+                  <div className="flex items-center gap-2 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600 shadow-neu-sm">
+                    <FaTimesCircle className="shrink-0" />
+                    <span>{passwordError}</span>
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="group relative flex w-full overflow-hidden items-center justify-center rounded-full bg-gradient-to-r from-[#a78bfa] to-fuchsia-500 py-3.5 text-sm font-extrabold text-white shadow-neu transition-all duration-300 hover:scale-[1.02] disabled:opacity-70"
+                >
+                  <div className="absolute inset-0 bg-white/20 translate-y-full transition-transform duration-300 group-hover:translate-y-0"></div>
+                  <span className="relative z-10">{loading ? 'Menyimpan...' : '🔐 Ubah Password'}</span>
+                </button>
               </form>
             )}
 
@@ -338,15 +431,20 @@ const ProfilePage = ({ initialTab = 'account' }) => {
                 <div className="rounded-3xl bg-[#f5f7fb] p-5 shadow-neu-sm">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                      <p className="text-sm font-semibold text-slate-900">Theme mode</p>
-                      <p className="text-sm text-slate-500">Pick light or dark appearance for your experience.</p>
+                      <p className="text-sm font-semibold text-slate-900">Theme Mode</p>
+                      <p className="text-sm text-slate-500">{isDark ? 'Dark mode aktif' : 'Light mode aktif'} — klik untuk ganti.</p>
                     </div>
                     <button
                       type="button"
-                      onClick={() => setSettings((prev) => ({ ...prev, themeMode: prev.themeMode === 'light' ? 'dark' : 'light' }))}
-                      className="rounded-full bg-[#e0e5ec] px-5 py-3 text-sm font-semibold text-slate-700 shadow-neu-sm"
+                      onClick={toggleTheme}
+                      className={`flex items-center gap-2 rounded-full px-5 py-3 text-sm font-semibold shadow-neu-sm transition-all duration-300 ${
+                        isDark 
+                          ? 'bg-[#a78bfa] text-white hover:bg-[#8b5cf6]' 
+                          : 'bg-[#e0e5ec] text-slate-700 hover:bg-[#f5f7fb]'
+                      }`}
                     >
-                      {settings.themeMode === 'light' ? 'Light Mode' : 'Dark Mode'}
+                      {isDark ? <FaSun className="text-yellow-300" /> : <FaMoon className="text-slate-500" />}
+                      {isDark ? 'Switch to Light' : 'Switch to Dark'}
                     </button>
                   </div>
                 </div>

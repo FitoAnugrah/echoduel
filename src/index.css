@@ -6,6 +6,34 @@
   color-scheme: light;
   font-family: Inter, system-ui, sans-serif;
   background-color: #e0e5ec;
+
+  /* Light mode tokens */
+  --bg-base:       #e0e5ec;
+  --bg-card:       #e0e5ec;
+  --bg-inset:      #e0e5ec;
+  --text-primary:  #1f2937;
+  --text-muted:    #4a4a6a;
+  --text-subtle:   #7b7b8d;
+  --shadow-out:    6px 6px 12px #b8b9be, -6px -6px 12px #ffffff;
+  --shadow-in:     inset 4px 4px 8px #b8b9be, inset -4px -4px 8px #ffffff;
+  --shadow-sm:     3px 3px 6px #b8b9be, -3px -3px 6px #ffffff;
+  --border-color:  #d1d5db;
+}
+
+html.dark {
+  color-scheme: dark;
+
+  /* Dark mode tokens */
+  --bg-base:       #1a1b2e;
+  --bg-card:       #1e2040;
+  --bg-inset:      #16172a;
+  --text-primary:  #e2e8f0;
+  --text-muted:    #a0aec0;
+  --text-subtle:   #718096;
+  --shadow-out:    6px 6px 12px #11121f, -6px -6px 12px #272960;
+  --shadow-in:     inset 4px 4px 8px #11121f, inset -4px -4px 8px #272960;
+  --shadow-sm:     3px 3px 6px #11121f, -3px -3px 6px #272960;
+  --border-color:  #374151;
 }
 
 html,
@@ -16,8 +44,9 @@ body,
 
 body {
   margin: 0;
-  background: #e0e5ec;
-  color: #1f2937;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  transition: background 0.3s ease, color 0.3s ease;
 }
 
 * {
@@ -29,23 +58,47 @@ body {
 }
 
 .neu-card {
-  background: #e0e5ec;
-  box-shadow: 6px 6px 12px #b8b9be, -6px -6px 12px #ffffff;
+  background: var(--bg-card);
+  box-shadow: var(--shadow-out);
   border-radius: 1rem;
 }
 
 .neu-card-inset {
-  background: #e0e5ec;
-  box-shadow: inset 4px 4px 8px #b8b9be, inset -4px -4px 8px #ffffff;
+  background: var(--bg-inset);
+  box-shadow: var(--shadow-in);
   border-radius: 1rem;
 }
 
 .neu-button {
-  background: #e0e5ec;
-  box-shadow: 6px 6px 12px #b8b9be, -6px -6px 12px #ffffff;
+  background: var(--bg-card);
+  box-shadow: var(--shadow-out);
   border: 1px solid transparent;
 }
 
 .neu-button:active {
-  box-shadow: inset 4px 4px 8px #b8b9be, inset -4px -4px 8px #ffffff;
+  box-shadow: var(--shadow-in);
+}
+
+/* Dark mode utility overrides */
+html.dark .bg-\[\#e0e5ec\]  { background-color: var(--bg-card) !important; }
+html.dark .bg-\[\#f5f7fb\]  { background-color: var(--bg-inset) !important; }
+html.dark .bg-background    { background-color: var(--bg-card) !important; }
+html.dark .text-slate-900   { color: var(--text-primary) !important; }
+html.dark .text-slate-800   { color: var(--text-primary) !important; }
+html.dark .text-slate-700   { color: var(--text-muted) !important; }
+html.dark .text-slate-600   { color: var(--text-muted) !important; }
+html.dark .text-slate-500   { color: var(--text-subtle) !important; }
+html.dark .text-\[\#4a4a6a\] { color: var(--text-muted) !important; }
+html.dark .text-\[\#7b7b8d\] { color: var(--text-subtle) !important; }
+html.dark .shadow-neu        { box-shadow: var(--shadow-out) !important; }
+html.dark .shadow-neu-sm     { box-shadow: var(--shadow-sm) !important; }
+html.dark .shadow-neu-inset  { box-shadow: var(--shadow-in) !important; }
+html.dark .border-slate-200  { border-color: var(--border-color) !important; }
+html.dark .border-b.border-slate-200 { border-color: var(--border-color) !important; }
+html.dark .bg-slate-100      { background-color: var(--bg-inset) !important; }
+html.dark .bg-slate-200      { background-color: #2d3748 !important; }
+html.dark .bg-white          { background-color: var(--bg-card) !important; }
+html.dark input, html.dark select, html.dark textarea {
+  background-color: var(--bg-inset) !important;
+  color: var(--text-primary) !important;
 }

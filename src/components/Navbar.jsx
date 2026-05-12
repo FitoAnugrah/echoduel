@@ -1,13 +1,15 @@
 import { useState, useEffect, useRef } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { FaBell, FaBars, FaSignOutAlt, FaTimes, FaUserFriends, FaTrophy } from 'react-icons/fa';
+import { FaBell, FaBars, FaSignOutAlt, FaTimes, FaUserFriends, FaTrophy, FaMoon, FaSun } from 'react-icons/fa';
 import { useAuthContext } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { toast } from 'react-hot-toast';
 import useSocket from '../hooks/useSocket';
 import { getAvatarUrl } from '../utils/avatar';
 
 const Navbar = () => {
   const { user, logout } = useAuthContext();
+  const { isDark, toggleTheme } = useTheme();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
@@ -85,6 +87,13 @@ const Navbar = () => {
         </div>
 
         <div className="hidden items-center gap-3 sm:flex">
+          <button
+            onClick={toggleTheme}
+            title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            className="rounded-full bg-[#e0e5ec] p-3 text-[#4a4a6a] shadow-neu transition hover:shadow-neu-sm"
+          >
+            {isDark ? <FaSun className="text-yellow-400" /> : <FaMoon />}
+          </button>
           <button onClick={() => toast('No new notifications', { icon: '🔔' })} className="rounded-full bg-[#e0e5ec] p-3 text-[#4a4a6a] shadow-neu transition hover:shadow-neu-sm">
             <FaBell />
           </button>
@@ -150,26 +159,37 @@ const Navbar = () => {
             </div>
             <nav className="space-y-3">
               <NavLink onClick={() => setDrawerOpen(false)} to="/lobby" className="block rounded-3xl bg-[#e0e5ec] px-4 py-3 text-sm text-[#4a4a6a] shadow-neu transition hover:bg-[#f5f7fb]">
-                Lobby
-              </NavLink>
-              <NavLink onClick={() => setDrawerOpen(false)} to="/profile" className="block rounded-3xl bg-[#e0e5ec] px-4 py-3 text-sm text-[#4a4a6a] shadow-neu transition hover:bg-[#f5f7fb]">
-                Profile
-              </NavLink>
-              <NavLink onClick={() => setDrawerOpen(false)} to="/leaderboard" className="block rounded-3xl bg-[#e0e5ec] px-4 py-3 text-sm text-[#4a4a6a] shadow-neu transition hover:bg-[#f5f7fb]">
-                Leaderboard
+                🎮 Lobby
               </NavLink>
               <NavLink onClick={() => setDrawerOpen(false)} to="/friends" className="block rounded-3xl bg-[#e0e5ec] px-4 py-3 text-sm text-[#4a4a6a] shadow-neu transition hover:bg-[#f5f7fb]">
-                Friends
+                👥 Friends
               </NavLink>
+              <NavLink onClick={() => setDrawerOpen(false)} to="/chat" className="block rounded-3xl bg-[#e0e5ec] px-4 py-3 text-sm text-[#4a4a6a] shadow-neu transition hover:bg-[#f5f7fb]">
+                💬 Chat
+              </NavLink>
+              <NavLink onClick={() => setDrawerOpen(false)} to="/leaderboard" className="block rounded-3xl bg-[#e0e5ec] px-4 py-3 text-sm text-[#4a4a6a] shadow-neu transition hover:bg-[#f5f7fb]">
+                🏆 Leaderboard
+              </NavLink>
+              <NavLink onClick={() => setDrawerOpen(false)} to="/profile" className="block rounded-3xl bg-[#e0e5ec] px-4 py-3 text-sm text-[#4a4a6a] shadow-neu transition hover:bg-[#f5f7fb]">
+                ✨ Profile
+              </NavLink>
+              <button
+                type="button"
+                onClick={() => { toggleTheme(); setDrawerOpen(false); }}
+                className="flex w-full items-center gap-3 rounded-3xl bg-[#e0e5ec] px-4 py-3 text-left text-sm text-[#4a4a6a] shadow-neu transition hover:bg-[#f5f7fb]"
+              >
+                {isDark ? <FaSun className="text-yellow-400" /> : <FaMoon />}
+                {isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+              </button>
               <button
                 type="button"
                 onClick={() => {
                   setDrawerOpen(false);
                   logout();
                 }}
-                className="w-full rounded-3xl bg-[#e0e5ec] px-4 py-3 text-left text-sm text-[#4a4a6a] shadow-neu transition hover:bg-[#f5f7fb]"
+                className="flex w-full items-center gap-2 rounded-3xl bg-[#e0e5ec] px-4 py-3 text-left text-sm text-[#4a4a6a] shadow-neu transition hover:bg-[#f5f7fb]"
               >
-                Logout
+                <FaSignOutAlt /> Logout
               </button>
             </nav>
           </div>

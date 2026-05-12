@@ -1,15 +1,16 @@
-const DEEZER_TIMEOUT_MS = 8000; // 8 seconds
+const DEEZER_TIMEOUT_MS = 10000; // Increased to 10 seconds for slower connections
 
 const GENRE_ARTISTS = {
-  'Pop Indo': [
+  'Pop Indonesia': [
     'Sheila On 7', 'Tulus', 'Mahalini', 'Lyodra', 'Tiara Andini', 'Dewa 19', 
     'NOAH', 'Judika', 'Andmesh', 'Rizky Febian', 'Nadin Amizah', 'Hindia', 
     'Pamungkas', 'Yura Yunita', 'Raisa', 'Afgan', 'Ardhito Pramono', 'Juicy Luicy',
     'Kunto Aji', 'Sal Priadi', 'Vierra', 'Geisha', 'Gigi', 'Danilla', 'Mocca', 
     'Sore', 'Payung Teduh', 'The Adams', 'White Shoes & The Couples Company', 
-    'Lomba Sihir', 'Reality Club', 'Efek Rumah Kaca', 'Barasuara', 'Fourtwnty', 'Fiersa Besari'
+    'Lomba Sihir', 'Reality Club', 'Efek Rumah Kaca', 'Barasuara', 'Fourtwnty', 'Fiersa Besari',
+    'Padi', 'Cokelat', 'Ungu', 'ST12', 'Peterpan', 'Ada Band', 'Maliq & D\'Essentials'
   ],
-  'Pop Barat': [
+  'Pop Western': [
     'Taylor Swift', 'Ed Sheeran', 'Ariana Grande', 'Bruno Mars', 'Justin Bieber', 
     'The Weeknd', 'Dua Lipa', 'Coldplay', 'Billie Eilish', 'Shawn Mendes', 
     'Maroon 5', 'Katy Perry', 'Lady Gaga', 'Harry Styles', 'Lauv', 'Troye Sivan', 
@@ -76,13 +77,20 @@ export const fetchTracks = async (genre, targetDifficulty, count = 5) => {
 
   for (let attempt = 1; attempt <= 2; attempt++) {
     try {
-      // Cek apakah genre ada di preset kita
+      // Normalize genre string and check against preset
+      const normalizedGenre = genre ? genre.toLowerCase().trim() : '';
+      const genreKeys = Object.keys(GENRE_ARTISTS);
+      const matchingKey = genreKeys.find(k => k.toLowerCase() === normalizedGenre) || 
+                          (normalizedGenre === 'pop' ? 'Pop Indonesia' : null) ||
+                          (normalizedGenre.includes('indo') ? 'Pop Indonesia' : null) ||
+                          (normalizedGenre.includes('barat') ? 'Pop Western' : null);
+
       let selectedArtists = [];
       let limitPerArtist = 40;
 
-      if (GENRE_ARTISTS[genre]) {
+      if (matchingKey) {
         // Jika berupa genre preset, ambil 15 artis acak
-        const shuffledArtists = [...GENRE_ARTISTS[genre]].sort(() => 0.5 - Math.random());
+        const shuffledArtists = [...GENRE_ARTISTS[matchingKey]].sort(() => 0.5 - Math.random());
         selectedArtists = shuffledArtists.slice(0, 15);
       } else {
         // Jika tidak ada di preset, anggap string tersebut adalah NAMA ARTIS spesifik

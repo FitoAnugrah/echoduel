@@ -13,16 +13,22 @@ api.interceptors.request.use((config) => {
     return config
 })
 
-// Kalau 401, logout otomatis
+// Kalau 401 atau 403, logout otomatis (token missing atau invalid/expired)
 api.interceptors.response.use(
     (response) => response,
     (error) => {
-        if (error.response && error.response.status === 401) {
-            localStorage.removeItem('echoduel_token')
-            localStorage.removeItem('echoduel_user')
-            window.location.href = '/login'
+        const status = error.response?.status;
+        // 401 = no token, 403 = token expired/invalid
+        if (status === 401 || status === 403) {
+            const token = localStorage.getItem('echoduel_token');
+            // Only force logout if user had a token (avoid redirect loops on public pages)
+            if (token) {
+                localStorage.removeItem('echoduel_token');
+                localStorage.removeItem('echoduel_user');
+                window.location.href = '/login';
+            }
         }
-        return Promise.reject(error)
+        return Promise.reject(error);
     }
 )
 

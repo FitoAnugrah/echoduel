@@ -7,7 +7,7 @@ import { createRoom, getRooms, joinRoom } from '../services/roomService';
 import { getFriends } from '../services/friendService';
 import { useAuthContext } from '../context/AuthContext';
 
-const genres = ['All', 'Pop Indo', 'Pop Barat', 'K-Pop', 'Rock', 'Indonesia Populer', 'Global Populer', 'Jazz', 'Hip Hop', 'Hip Dut', 'Alt Rock Indo'];
+const genres = ['All', 'Pop Indonesia', 'Pop Western', 'K-Pop', 'Rock', 'Jazz', 'Hip Hop', 'Hip Dut', 'Alt Rock Indo'];
 const difficulties = ['Easy', 'Medium', 'Hard'];
 const maxPlayersOptions = ['2', '4'];
 
@@ -22,7 +22,7 @@ const LobbyPage = () => {
   const [creatingRoom, setCreatingRoom] = useState(false);
   const [form, setForm] = useState({
     name: '',
-    genre: 'Pop Indo',
+    genre: 'Pop Indonesia',
     customArtist: '',
     difficulty: 'Easy',
     maxPlayers: '2',
@@ -76,7 +76,7 @@ const LobbyPage = () => {
       });
 
       setModalOpen(false);
-      setForm({ name: '', genre: 'Pop Indo', customArtist: '', difficulty: 'Easy', maxPlayers: '2' });
+      setForm({ name: '', genre: 'Pop Indonesia', customArtist: '', difficulty: 'Easy', maxPlayers: '2' });
       navigate(`/game/${room.id}`, { state: { fallbackName: form.name || `${finalGenre} Room`, fallbackGenre: finalGenre, fallbackDifficulty: form.difficulty } });
     } catch (err) {
       const message = err?.response?.data?.message || 'Failed to create room. Please try again.';
@@ -227,12 +227,10 @@ const LobbyPage = () => {
                     onChange={(event) => setForm((prev) => ({ ...prev, genre: event.target.value }))}
                     className="w-full rounded-xl bg-[#e0e5ec] px-4 py-3 text-[#4a4a6a] shadow-neu-inset outline-none"
                   >
-                    <option>Pop Indo</option>
-                    <option>Pop Barat</option>
+                    <option>Pop Indonesia</option>
+                    <option>Pop Western</option>
                     <option>K-Pop</option>
                     <option>Rock</option>
-                    <option>Indonesia Populer</option>
-                    <option>Global Populer</option>
                     <option>Jazz</option>
                     <option>Hip Hop</option>
                     <option>Hip Dut</option>

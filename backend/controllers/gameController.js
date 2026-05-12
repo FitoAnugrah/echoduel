@@ -98,7 +98,7 @@ export const setupSocketHandlers = (io) => {
           name: fallbackName || `Room ${roomId}`,
           host: verifiedUser?.username || socket.id,
           hostId: verifiedUser?.id || socket.id,
-          genre: fallbackGenre || 'Pop Indo',
+          genre: fallbackGenre || 'Pop Indonesia',
           difficulty: fallbackDifficulty || 'Easy',
           maxPlayers: 2,
           roundDuration: 30,

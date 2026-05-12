@@ -23,7 +23,7 @@
     "name": "Fanszer_",
     "avatar": "/uploads/avatars/avatar_usr_1778429075084_1778535337601.png",
     "joinDate": "11/5/2026",
-    "gamesPlayed": 26,
+    "gamesPlayed": 27,
     "winRate": 100,
     "score": 1530,
     "favoriteGenre": "Pop Indo",
@@ -31,7 +31,7 @@
     "friends": [
       "usr_1778424035589"
     ],
-    "wins": 26,
+    "wins": 27,
     "notifications": {
       "friendRequests": true,
       "gameInvites": true,
@@ -136,5 +136,18 @@
     "gamesPlayed": 5,
     "winRate": 60,
     "wins": 3
+  },
+  {
+    "id": "usr_1778557823121",
+    "email": "audit@test.com",
+    "username": "audituser",
+    "name": "Audit User",
+    "password": "$2b$10$hjnrlNLArvJVAgK1gu2/wOavIEyNC4v25Jsv2OY2u3Q/dHHRjVWs6",
+    "avatar": "https://ui-avatars.com/api/?name=Audit%20User&background=A78BFA&color=ffffff",
+    "joinDate": "12/5/2026",
+    "gamesPlayed": 0,
+    "winRate": 0,
+    "score": 0,
+    "favoriteGenre": "Pop Indo"
   }
 ]

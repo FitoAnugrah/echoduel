@@ -50,10 +50,10 @@ export const createRoom = (req, res) => {
 
   activeRooms.set(roomId, {
     id: roomId,
-    name: name || `${genre || 'Pop Indo'} Room`,
+    name: name || `${genre || 'Pop Indonesia'} Room`,
     host: user.username,       // verified from JWT, not from body
     hostId: user.id,           // store hostId for permission checks
-    genre: genre || 'Pop Indo',
+    genre: genre || 'Pop Indonesia',
     difficulty: difficulty || 'Easy',
     maxPlayers: parseInt(maxPlayers) || 2,
     players: [],
@@ -67,7 +67,7 @@ export const createRoom = (req, res) => {
 
   res.status(201).json({
     id: roomId,
-    name: name || `${genre || 'Pop Indo'} Room`,
+    name: name || `${genre || 'Pop Indonesia'} Room`,
     host: user.username,
     genre,
     difficulty,

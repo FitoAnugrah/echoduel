@@ -2,15 +2,27 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>EchoDuel</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="EchoDuel - The ultimate music guessing battle game. Compete with friends in real-time!" />
+  <link rel="icon" type="image/png" href="/logo.png" />
+  <title>EchoDuel 🎵</title>
+  <!-- Prevent dark mode flash on page load -->
+  <script>
+    (function() {
+      try {
+        var theme = localStorage.getItem('echoduel_theme');
+        if (theme === 'dark') {
+          document.documentElement.classList.add('dark');
+        }
+      } catch (e) {}
+    })();
+  </script>
 </head>
 
 <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-    <div id="root"></div>
+  <div id="root"></div>
+  <script type="module" src="/src/main.jsx"></script>
 </body>
 
 </html>
