@@ -7,7 +7,7 @@ import { createRoom, getRooms, joinRoom } from '../services/roomService';
 import { getFriends } from '../services/friendService';
 import { useAuthContext } from '../context/AuthContext';
 
-const genres = ['All', 'Pop Indo', 'Pop Barat', 'K-Pop', 'Rock'];
+const genres = ['All', 'Pop Indo', 'Pop Barat', 'K-Pop', 'Rock', 'Indonesia Populer', 'Global Populer', 'Jazz', 'Hip Hop', 'Hip Dut', 'Alt Rock Indo'];
 const difficulties = ['Easy', 'Medium', 'Hard'];
 const maxPlayersOptions = ['2', '4'];
 
@@ -23,6 +23,7 @@ const LobbyPage = () => {
   const [form, setForm] = useState({
     name: '',
     genre: 'Pop Indo',
+    customArtist: '',
     difficulty: 'Easy',
     maxPlayers: '2',
   });
@@ -63,16 +64,20 @@ const LobbyPage = () => {
 
     try {
       console.log("Frontend mengirim:", form.genre, form.difficulty);
+      const finalGenre = form.genre === 'Custom Artist' && form.customArtist.trim() 
+        ? form.customArtist.trim() 
+        : form.genre;
+
       const room = await createRoom({
-        name: form.name || `${form.genre} Room`,
-        genre: form.genre,
+        name: form.name || `${finalGenre} Room`,
+        genre: finalGenre,
         difficulty: form.difficulty,
         maxPlayers: Number(form.maxPlayers),
       });
 
       setModalOpen(false);
-      setForm({ name: '', genre: 'Pop Indo', difficulty: 'Easy', maxPlayers: '2' });
-      navigate(`/game/${room.id}`, { state: { fallbackName: form.name || `${form.genre} Room`, fallbackGenre: form.genre, fallbackDifficulty: form.difficulty } });
+      setForm({ name: '', genre: 'Pop Indo', customArtist: '', difficulty: 'Easy', maxPlayers: '2' });
+      navigate(`/game/${room.id}`, { state: { fallbackName: form.name || `${finalGenre} Room`, fallbackGenre: finalGenre, fallbackDifficulty: form.difficulty } });
     } catch (err) {
       const message = err?.response?.data?.message || 'Failed to create room. Please try again.';
       toast.error(message);
@@ -118,18 +123,21 @@ const LobbyPage = () => {
         </aside>
 
         <main className="space-y-6">
-          <div className="rounded-[2rem] bg-[#e0e5ec] p-5 shadow-neu">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <div className="flex flex-wrap gap-2">
+          <div className="relative overflow-hidden rounded-[2.5rem] bg-[#e0e5ec] p-6 shadow-neu sm:p-8">
+            <div className="absolute -left-10 -top-10 h-40 w-40 animate-pulse-slow rounded-full bg-[#a78bfa] opacity-20 blur-3xl"></div>
+            <div className="absolute -bottom-10 -right-10 h-40 w-40 animate-pulse-slow rounded-full bg-fuchsia-400 opacity-20 blur-3xl" style={{ animationDelay: '2s' }}></div>
+            
+            <div className="relative z-10 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+              <div className="flex flex-wrap gap-3">
                 {genres.map((genre) => (
                   <button
                     key={genre}
                     type="button"
                     onClick={() => setActiveGenre(genre)}
-                    className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                    className={`rounded-full px-5 py-2.5 text-sm font-extrabold transition-all duration-300 ${
                       activeGenre === genre
-                        ? 'bg-[#a78bfa] text-white shadow-neu-sm'
-                        : 'bg-[#e0e5ec] text-[#4a4a6a] shadow-neu-inset'
+                        ? 'bg-gradient-to-r from-[#a78bfa] to-fuchsia-400 text-white shadow-neu-sm scale-105'
+                        : 'bg-[#e0e5ec] text-[#4a4a6a] shadow-neu-inset hover:shadow-neu hover:-translate-y-0.5'
                     }`}
                   >
                     {genre}
@@ -139,28 +147,45 @@ const LobbyPage = () => {
               <button
                 type="button"
                 onClick={() => setModalOpen(true)}
-                className="rounded-full bg-[#a78bfa] px-5 py-3 text-sm font-semibold text-white shadow-neu hover:bg-[#8b5cf6]"
+                className="group relative overflow-hidden rounded-full bg-gradient-to-r from-[#a78bfa] to-fuchsia-500 px-8 py-3.5 text-sm font-black text-white shadow-neu transition-all hover:scale-105 hover:shadow-lg active:scale-95"
               >
-                Create Room
+                <div className="absolute inset-0 bg-white/20 translate-y-full transition-transform duration-300 group-hover:translate-y-0"></div>
+                <span className="relative z-10 text-shadow-sm">+ Create Room</span>
               </button>
             </div>
           </div>
 
-          <div className="rounded-[2rem] bg-[#e0e5ec] p-5 shadow-neu">
-            <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div className="rounded-[2.5rem] bg-[#e0e5ec] p-6 shadow-neu sm:p-8">
+            <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <h1 className="text-2xl font-semibold text-[#4a4a6a]">Rooms</h1>
-                <p className="text-sm text-slate-500">Browse and join a room that fits your music style.</p>
+                <h1 className="text-3xl font-black text-[#4a4a6a] tracking-tight">Active Rooms</h1>
+                <p className="mt-1 text-sm font-medium text-slate-500">Jump into a game and show off your music knowledge.</p>
               </div>
-              <span className="rounded-full bg-[#f5f7fb] px-4 py-2 text-sm font-medium text-[#4a4a6a]">
-                {rooms.length} rooms available
+              <span className="inline-flex items-center gap-2 rounded-full bg-[#f5f7fb] px-5 py-2.5 text-xs font-bold uppercase tracking-widest text-[#a78bfa] shadow-neu-inset">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#a78bfa] opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-[#a78bfa]"></span>
+                </span>
+                {rooms.length} Available
               </span>
             </div>
-            <div className="grid gap-4 lg:grid-cols-2">
+            
+            <div className="grid gap-6 lg:grid-cols-2">
               {loadingRooms ? (
-                <div className="col-span-full rounded-[2rem] bg-[#f5f7fb] p-8 text-center text-slate-500 shadow-neu-sm">Refreshing rooms...</div>
-              ) : (
+                <div className="col-span-full flex h-40 flex-col items-center justify-center rounded-[2.5rem] bg-[#f5f7fb] shadow-neu-inset">
+                  <div className="h-8 w-8 animate-spin-slow rounded-full border-4 border-slate-200 border-t-[#a78bfa]"></div>
+                  <p className="mt-4 text-sm font-bold text-slate-400">Scanning for rooms...</p>
+                </div>
+              ) : rooms.length > 0 ? (
                 rooms.map((room) => <RoomCard key={room.id} room={room} onJoin={handleJoin} />)
+              ) : (
+                <div className="col-span-full flex flex-col items-center justify-center rounded-[2.5rem] border-2 border-dashed border-slate-300 py-16 text-center transition-colors hover:border-[#a78bfa]/50 hover:bg-white/50">
+                  <div className="mb-4 flex h-16 w-16 animate-bounce-slight items-center justify-center rounded-full bg-[#f5f7fb] text-3xl text-[#a78bfa] shadow-neu-inset">
+                    🎧
+                  </div>
+                  <h3 className="text-xl font-bold text-[#4a4a6a]">No Rooms Found</h3>
+                  <p className="mt-2 text-sm font-medium text-slate-500 max-w-[250px]">Looks like it's quiet here. Be the first to create a room and invite your friends!</p>
+                </div>
               )}
             </div>
           </div>
@@ -206,6 +231,13 @@ const LobbyPage = () => {
                     <option>Pop Barat</option>
                     <option>K-Pop</option>
                     <option>Rock</option>
+                    <option>Indonesia Populer</option>
+                    <option>Global Populer</option>
+                    <option>Jazz</option>
+                    <option>Hip Hop</option>
+                    <option>Hip Dut</option>
+                    <option>Alt Rock Indo</option>
+                    <option>Custom Artist</option>
                   </select>
                 </label>
                 <label className="space-y-2 text-sm font-medium text-[#4a4a6a]">
@@ -233,6 +265,18 @@ const LobbyPage = () => {
                   </select>
                 </label>
               </div>
+
+              {form.genre === 'Custom Artist' && (
+                <div className="space-y-2 animate-float">
+                  <label className="block text-sm font-medium text-[#4a4a6a]">Artist Name</label>
+                  <input
+                    value={form.customArtist}
+                    onChange={(event) => setForm((prev) => ({ ...prev, customArtist: event.target.value }))}
+                    placeholder="e.g. Taylor Swift, Nadin Amizah, Sheila On 7"
+                    className="w-full rounded-xl bg-[#e0e5ec] px-4 py-3 text-[#4a4a6a] shadow-neu-inset outline-none ring-2 ring-[#a78bfa]/50"
+                  />
+                </div>
+              )}
 
               <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
                 <button

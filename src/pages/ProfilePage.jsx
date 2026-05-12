@@ -144,22 +144,31 @@ const ProfilePage = ({ initialTab = 'account' }) => {
 
   return (
     <section className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 text-[#4a4a6a]">
-      <header className="rounded-[2rem] bg-background p-6 shadow-neu">
-        <h1 className="text-3xl font-bold text-slate-900">Profile</h1>
-        <p className="mt-2 text-slate-500">Update your account, security settings, and notification preferences.</p>
+      <header className="relative overflow-hidden rounded-[2.5rem] bg-[#e0e5ec] p-6 shadow-neu sm:p-8">
+        <div className="absolute -left-10 -top-10 h-40 w-40 animate-pulse-slow rounded-full bg-[#a78bfa] opacity-20 blur-3xl"></div>
+        <div className="absolute -bottom-10 -right-10 h-40 w-40 animate-pulse-slow rounded-full bg-sky-400 opacity-20 blur-3xl" style={{ animationDelay: '2s' }}></div>
+        <div className="relative z-10">
+          <h1 className="text-4xl font-black tracking-tight text-[#4a4a6a]">My Profile ✨</h1>
+          <p className="mt-2 text-sm font-medium text-slate-500">Update your account details, security settings, and notification preferences.</p>
+        </div>
       </header>
 
       <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
-        <div className="rounded-[2rem] bg-background p-6 shadow-neu">
-          <div className="flex flex-col items-center gap-5 text-center">
-            <div className="relative">
-              <button type="button" onClick={handleAvatarClick} className="absolute bottom-0 right-0 rounded-full bg-[#a78bfa] p-3 text-white shadow-neu-sm transition hover:bg-[#8b5cf6]">
-                <FaCamera />
+        <div className="rounded-[2.5rem] bg-[#e0e5ec] p-6 shadow-neu lg:p-8">
+          <div className="flex flex-col items-center gap-6 text-center">
+            <div className="group relative">
+              <div className="absolute -inset-2 animate-spin-slow rounded-full bg-gradient-to-tr from-[#a78bfa] to-sky-400 opacity-40 blur-md transition-opacity duration-300 group-hover:opacity-100"></div>
+              <button 
+                type="button" 
+                onClick={handleAvatarClick} 
+                className="absolute bottom-0 right-0 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[#a78bfa] to-fuchsia-500 text-white shadow-neu transition-transform duration-300 hover:scale-110 active:scale-95"
+              >
+                <FaCamera className="text-sm" />
               </button>
               <img
                 src={avatarPreview}
                 alt={profile.name}
-                className="h-32 w-32 rounded-full border-8 border-[#e0e5ec] object-cover shadow-neu"
+                className="relative z-10 h-36 w-36 rounded-full border-4 border-[#e0e5ec] object-cover shadow-[10px_10px_20px_#b8b9be,-10px_-10px_20px_#ffffff] transition-transform duration-300 group-hover:scale-[1.02]"
               />
             </div>
             <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
@@ -249,7 +258,7 @@ const ProfilePage = ({ initialTab = 'account' }) => {
                     disabled={!editMode}
                     className="w-full rounded-3xl border border-slate-200 bg-[#e0e5ec] px-5 py-3 text-sm text-slate-700 outline-none focus:ring-2 focus:ring-[#a78bfa]/30 disabled:opacity-60"
                   >
-                    {['Pop Indo', 'Pop Barat', 'K-Pop', 'Rock', 'Jazz', 'Electronic'].map(g => (
+                    {['Pop Indo', 'Pop Barat', 'K-Pop', 'Rock', 'Indonesia Populer', 'Global Populer', 'Jazz', 'Hip Hop', 'Hip Dut', 'Alt Rock Indo', 'Electronic'].map(g => (
                       <option key={g} value={g}>{g}</option>
                     ))}
                   </select>

@@ -97,7 +97,7 @@ const GamePage = () => {
     if (round.isActive && audioRef.current) {
       audioRef.current.currentTime = 0;
       audioRef.current.play().catch(() => {
-        // Autoplay may be blocked until user interaction.
+        toast('Autoplay blocked. Please click Play manually!', { icon: '🔇' });
       });
     }
     // BUG-05 FIX: Pause audio when round ends
@@ -348,9 +348,10 @@ const GamePage = () => {
                     </button>
                     <button 
                       onClick={handleStartGame}
-                      className="rounded-full bg-[#a78bfa] px-8 py-3.5 text-sm font-extrabold text-white shadow-neu transition-all hover:bg-[#8b5cf6]"
+                      className="group relative overflow-hidden rounded-full bg-gradient-to-r from-[#a78bfa] to-fuchsia-500 px-8 py-3.5 text-sm font-extrabold text-white shadow-neu transition-all hover:scale-105 active:scale-95"
                     >
-                      Start Game
+                      <div className="absolute inset-0 bg-white/20 translate-y-full transition-transform duration-300 group-hover:translate-y-0"></div>
+                      <span className="relative z-10 text-shadow-sm">Start Game</span>
                     </button>
                   </>
                 )}
@@ -431,9 +432,10 @@ const GamePage = () => {
                 <button
                   type="submit"
                   disabled={hasAnsweredCorrectly || !round.isActive}
-                  className="whitespace-nowrap rounded-full bg-[#a78bfa] px-10 py-5 text-lg font-extrabold text-white shadow-neu transition-all hover:bg-[#8b5cf6] disabled:cursor-not-allowed disabled:opacity-60"
+                  className="group relative overflow-hidden whitespace-nowrap rounded-full bg-gradient-to-r from-[#a78bfa] to-fuchsia-500 px-10 py-5 text-lg font-extrabold text-white shadow-neu transition-all hover:scale-105 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:scale-100"
                 >
-                  {hasAnsweredCorrectly ? 'Answered ✅' : 'Submit'}
+                  <div className="absolute inset-0 bg-white/20 translate-y-full transition-transform duration-300 group-hover:translate-y-0"></div>
+                  <span className="relative z-10 text-shadow-sm">{hasAnsweredCorrectly ? 'Answered ✅' : 'Submit'}</span>
                 </button>
               </div>
 

@@ -27,7 +27,10 @@ export const getUsers = () => {
   try {
     const data = fs.readFileSync(dataFile, 'utf8');
     return JSON.parse(data);
-  } catch {
+  } catch (err) {
+    if (err.code !== 'ENOENT') {
+      console.error('❌ FATAL: Error reading users.json. Database might be corrupted:', err);
+    }
     return [];
   }
 };
@@ -48,7 +51,10 @@ export const getChats = () => {
   try {
     const data = fs.readFileSync(chatFile, 'utf8');
     return JSON.parse(data);
-  } catch {
+  } catch (err) {
+    if (err.code !== 'ENOENT') {
+      console.error('❌ FATAL: Error reading chats.json. Database might be corrupted:', err);
+    }
     return [];
   }
 };
