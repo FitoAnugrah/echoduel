@@ -42,6 +42,10 @@ export const getFriendRequests = (req, res) => {
 export const sendFriendRequest = (req, res) => {
   const { friendId } = req.body;
   const userId = req.user.id;
+
+  if (!friendId) return res.status(400).json({ message: 'friendId is required.' });
+  if (friendId === userId) return res.status(400).json({ message: 'You cannot send a friend request to yourself.' });
+
   const users = getUsers();
   
   const user = users.find(u => u.id === userId);
@@ -49,14 +53,22 @@ export const sendFriendRequest = (req, res) => {
 
   if (!friend) return res.status(404).json({ message: 'User not found' });
 
+  // Already friends
+  if ((user.friends || []).includes(friendId)) {
+    return res.status(400).json({ message: 'You are already friends.' });
+  }
+
   if (!user.outgoingRequests) user.outgoingRequests = [];
   if (!friend.incomingRequests) friend.incomingRequests = [];
 
-  if (!user.outgoingRequests.includes(friendId)) {
-    user.outgoingRequests.push(friendId);
-    friend.incomingRequests.push(userId);
-    saveUsers(users);
+  // Already sent a request
+  if (user.outgoingRequests.includes(friendId)) {
+    return res.status(400).json({ message: 'Friend request already sent.' });
   }
+
+  user.outgoingRequests.push(friendId);
+  friend.incomingRequests.push(userId);
+  saveUsers(users);
 
   res.json({ message: 'Friend request sent' });
 };

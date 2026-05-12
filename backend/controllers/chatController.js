@@ -30,8 +30,15 @@ export const getConversations = (req, res) => {
 export const getMessages = (req, res) => {
   const { friendId } = req.params;
   const userId = req.user.id;
-  const chats = getChats();
 
+  // Validate friendId is a real user
+  const users = getUsers();
+  const friendExists = users.find(u => u.id === friendId);
+  if (!friendExists) {
+    return res.status(404).json({ message: 'User not found.' });
+  }
+
+  const chats = getChats();
   const chat = chats.find(c => c.participants.includes(userId) && c.participants.includes(friendId));
   
   if (!chat) return res.json([]);
@@ -48,6 +55,29 @@ export const sendMessage = (req, res) => {
   const { friendId } = req.params;
   const { text } = req.body;
   const userId = req.user.id;
+
+  // Validate message text
+  if (!text || typeof text !== 'string' || text.trim().length === 0) {
+    return res.status(400).json({ message: 'Message text cannot be empty.' });
+  }
+
+  if (text.trim().length > 1000) {
+    return res.status(400).json({ message: 'Message is too long (max 1000 characters).' });
+  }
+
+  // Validate that friendId is a real user
+  const users = getUsers();
+  const friend = users.find(u => u.id === friendId);
+  if (!friend) {
+    return res.status(404).json({ message: 'Recipient user not found.' });
+  }
+
+  // Validate friendship — only friends can message each other
+  const sender = users.find(u => u.id === userId);
+  const isFriend = sender && (sender.friends || []).includes(friendId);
+  if (!isFriend) {
+    return res.status(403).json({ message: 'You can only send messages to friends.' });
+  }
   
   const chats = getChats();
   let chat = chats.find(c => c.participants.includes(userId) && c.participants.includes(friendId));
@@ -64,7 +94,7 @@ export const sendMessage = (req, res) => {
   const newMessage = {
     id: `msg_${Date.now()}`,
     senderId: userId,
-    text,
+    text: text.trim(),
     timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
   };
 

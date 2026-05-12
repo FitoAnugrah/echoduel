@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { FaBell, FaBars, FaSignOutAlt, FaTimes, FaUserFriends } from 'react-icons/fa';
+import { FaBell, FaBars, FaSignOutAlt, FaTimes, FaUserFriends, FaTrophy } from 'react-icons/fa';
 import { useAuthContext } from '../context/AuthContext';
 import { toast } from 'react-hot-toast';
 import useSocket from '../hooks/useSocket';
-import { useEffect } from 'react';
+import { getAvatarUrl } from '../utils/avatar';
 
 const Navbar = () => {
   const { user, logout } = useAuthContext();
@@ -12,6 +12,19 @@ const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
   const socket = useSocket();
+  const menuRef = useRef(null);
+
+  // BUG-08 FIX: Close dropdown on outside click
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [menuOpen]);
 
   useEffect(() => {
     if (!socket) return;
@@ -41,15 +54,13 @@ const Navbar = () => {
     return () => socket.off('room-invite', handleRoomInvite);
   }, [socket, navigate]);
 
-  const avatarUrl =
-    user?.avatar ||
-    `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'Player')}&background=A78BFA&color=ffffff`;
+  const avatarUrl = getAvatarUrl(user?.avatar, user?.name || user?.username || 'Player');
 
   return (
     <header className="sticky top-0 z-30 bg-[#e0e5ec] shadow-neu">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-4 sm:px-6">
-        <NavLink to="/lobby" className="text-xl font-bold tracking-tight text-[#4a4a6a]">
-          EchoDuel
+        <NavLink to="/lobby" className="flex items-center gap-2">
+          <img src="/logo.png" alt="EchoDuel" className="h-24 w-auto object-contain" />
         </NavLink>
 
         <div className="hidden flex-1 justify-center sm:flex">
@@ -59,7 +70,7 @@ const Navbar = () => {
               e.preventDefault();
               const val = e.target.search.value.trim();
               if (val) {
-                navigate('/friends', { state: { search: val } });
+                navigate('/search', { state: { search: val } });
                 e.target.search.value = '';
               }
             }}
@@ -67,7 +78,7 @@ const Navbar = () => {
             <input
               name="search"
               type="search"
-              placeholder="Search friends..."
+              placeholder="Search players or rooms..."
               className="w-full rounded-full bg-[#e0e5ec] px-4 py-3 text-[#4a4a6a] shadow-neu-inset outline-none focus:ring-2 focus:ring-[#a78bfa]/30"
             />
           </form>
@@ -77,10 +88,13 @@ const Navbar = () => {
           <button onClick={() => toast('No new notifications', { icon: '🔔' })} className="rounded-full bg-[#e0e5ec] p-3 text-[#4a4a6a] shadow-neu transition hover:shadow-neu-sm">
             <FaBell />
           </button>
-          <button onClick={() => navigate('/friends')} className="rounded-full bg-[#e0e5ec] p-3 text-[#4a4a6a] shadow-neu transition hover:shadow-neu-sm">
+          <button onClick={() => navigate('/leaderboard')} className="rounded-full bg-[#e0e5ec] p-3 text-[#4a4a6a] shadow-neu transition hover:shadow-neu-sm" title="Leaderboard">
+            <FaTrophy />
+          </button>
+          <button onClick={() => navigate('/friends')} className="rounded-full bg-[#e0e5ec] p-3 text-[#4a4a6a] shadow-neu transition hover:shadow-neu-sm" title="Friends">
             <FaUserFriends />
           </button>
-          <div className="relative">
+          <div className="relative" ref={menuRef}>
             <button
               type="button"
               onClick={() => setMenuOpen((prev) => !prev)}
@@ -97,7 +111,7 @@ const Navbar = () => {
             </button>
             {menuOpen && (
               <div className="absolute right-0 mt-3 w-48 rounded-[1.5rem] bg-[#e0e5ec] p-3 shadow-neu">
-                <NavLink to="/profile" className="block rounded-3xl px-3 py-2 text-sm text-[#4a4a6a] transition hover:bg-[#f5f7fb]">
+                <NavLink to="/profile" onClick={() => setMenuOpen(false)} className="block rounded-3xl px-3 py-2 text-sm text-[#4a4a6a] transition hover:bg-[#f5f7fb]">
                   Profile
                 </NavLink>
                 <button onClick={() => { setMenuOpen(false); navigate('/settings'); }} className="mt-1 w-full rounded-3xl px-3 py-2 text-left text-sm text-[#4a4a6a] transition hover:bg-[#f5f7fb]">
@@ -127,9 +141,8 @@ const Navbar = () => {
         <div className="fixed inset-0 z-40 bg-black/20 sm:hidden">
           <div className="absolute right-0 top-0 flex h-full w-72 flex-col bg-[#e0e5ec] p-5 shadow-neu">
             <div className="mb-6 flex items-center justify-between">
-              <div>
-                <p className="text-lg font-semibold text-[#4a4a6a]">EchoDuel</p>
-                <p className="text-sm text-slate-500">{user?.username || 'Player'}</p>
+              <div className="flex items-center gap-2">
+                <img src="/logo.png" alt="EchoDuel" className="h-28 w-auto object-contain" />
               </div>
               <button type="button" onClick={() => setDrawerOpen(false)} className="rounded-full bg-[#f5f7fb] p-2 text-[#4a4a6a] shadow-neu-sm">
                 <FaTimes />

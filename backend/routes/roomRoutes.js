@@ -1,11 +1,15 @@
 import express from 'express';
 import { getRooms, createRoom, getRoomDetail, joinRoomApi } from '../controllers/roomController.js';
+import { authenticateToken } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
+// GET /api/rooms - public, anyone can browse rooms
 router.get('/', getRooms);
-router.post('/', createRoom);
 router.get('/:id', getRoomDetail);
-router.post('/:id/join', joinRoomApi);
+
+// POST routes require authentication
+router.post('/', authenticateToken, createRoom);
+router.post('/:id/join', authenticateToken, joinRoomApi);
 
 export default router;

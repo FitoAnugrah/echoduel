@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import ChatBubble from '../components/ChatBubble';
 import InputField from '../components/InputField';
@@ -6,6 +6,7 @@ import Button from '../components/Button';
 import { getConversations, getChatHistory, sendMessage } from '../services/friendService';
 import { useAuthContext } from '../context/AuthContext';
 import useSocket from '../hooks/useSocket';
+import { toast } from 'react-hot-toast';
 
 const ChatPage = () => {
   const { friendId } = useParams();
@@ -17,6 +18,8 @@ const ChatPage = () => {
   const { user } = useAuthContext();
   const [conversations, setConversations] = useState([]);
   const socket = useSocket();
+  // Ref for auto-scroll to latest message
+  const messagesEndRef = useRef(null);
 
   useEffect(() => {
     const fetchConvos = async () => {
@@ -83,6 +86,11 @@ const ChatPage = () => {
     [conversations, activeFriend]
   );
 
+  // Auto-scroll to bottom whenever history changes
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [history]);
+
   const handleSelectConversation = (conversation) => {
     setActiveFriend(conversation.friendId);
     setNewNotifications((prev) => ({ ...prev, [conversation.friendId]: 0 }));
@@ -114,7 +122,8 @@ const ChatPage = () => {
       const updatedConvos = await getConversations();
       setConversations(updatedConvos);
     } catch (err) {
-      console.error("Failed to send message");
+      const message = err?.response?.data?.message || err?.message || 'Failed to send message.';
+      toast.error(message);
     }
   };
 
@@ -152,7 +161,7 @@ const ChatPage = () => {
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <img src={conversation.avatar} alt={conversation.name} className="h-12 w-12 rounded-full" />
+                  <img src={getAvatarUrl(conversation.avatar, conversation.name)} alt={conversation.name} className="h-12 w-12 rounded-full" />
                   <div className="min-w-0 flex-1">
                     <div className="flex justify-between items-center">
                       <p className="truncate font-semibold text-slate-900">{conversation.name}</p>
@@ -198,6 +207,8 @@ const ChatPage = () => {
                     No messages yet. Say hello to start chatting.
                   </div>
                 )}
+                {/* Anchor element for auto-scroll */}
+                <div ref={messagesEndRef} />
               </div>
               <form className="mt-4 grid gap-4 rounded-[2rem] bg-slate-50 p-4" onSubmit={handleSend}>
                 <InputField

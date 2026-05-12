@@ -4,6 +4,7 @@ import Button from '../components/Button';
 import InputField from '../components/InputField';
 import { useEffect } from 'react';
 import { getFriends, getFriendRequests, sendRequest, acceptRequest, declineRequest, cancelRequest, searchUsers } from '../services/friendService';
+import { getAvatarUrl } from '../utils/avatar';
 const tabs = [
   { id: 'friends', label: 'Friends' },
   { id: 'requests', label: 'Requests' },
@@ -162,7 +163,7 @@ const FriendsPage = () => {
                       <div key={user.id} className="rounded-[2rem] bg-[#f5f7fb] p-4 shadow-neu-sm">
                         <div className="flex items-center justify-between gap-4">
                           <div className="flex items-center gap-3">
-                            <img src={user.avatar} alt={user.name} className="h-12 w-12 rounded-full" />
+                            <img src={getAvatarUrl(user.avatar, user.name)} alt={user.name} className="h-12 w-12 rounded-full" />
                             <div>
                               <p className="font-semibold text-slate-900">{user.name}</p>
                               <p className="text-sm text-slate-500">@{user.username}</p>
@@ -195,7 +196,7 @@ const FriendsPage = () => {
                   <div key={friend.id} className="rounded-[2rem] bg-[#f5f7fb] p-4 shadow-neu-sm">
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                       <div className="flex items-center gap-3">
-                        <img src={friend.avatar} alt={friend.name} className="h-14 w-14 rounded-full" />
+                        <img src={getAvatarUrl(friend.avatar, friend.name)} alt={friend.name} className="h-14 w-14 rounded-full" />
                         <div>
                           <p className="font-semibold text-slate-900">{friend.name}</p>
                           <p className="text-sm text-slate-500">Score {friend.score}</p>
@@ -232,7 +233,7 @@ const FriendsPage = () => {
                   <div key={request.id} className="rounded-[2rem] bg-[#f5f7fb] p-4 shadow-neu-sm">
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                       <div className="flex items-center gap-3">
-                        <img src={request.avatar} alt={request.name} className="h-12 w-12 rounded-full" />
+                        <img src={getAvatarUrl(request.avatar, request.name)} alt={request.name} className="h-12 w-12 rounded-full" />
                         <div>
                           <p className="font-semibold text-slate-900">{request.name}</p>
                           <p className="text-sm text-slate-500">@{request.username}</p>
@@ -259,7 +260,7 @@ const FriendsPage = () => {
                   <div key={request.id} className="rounded-[2rem] bg-[#f5f7fb] p-4 shadow-neu-sm">
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                       <div className="flex items-center gap-3">
-                        <img src={request.avatar} alt={request.name} className="h-12 w-12 rounded-full" />
+                        <img src={getAvatarUrl(request.avatar, request.name)} alt={request.name} className="h-12 w-12 rounded-full" />
                         <div>
                           <p className="font-semibold text-slate-900">{request.name}</p>
                           <p className="text-sm text-slate-500">Pending</p>

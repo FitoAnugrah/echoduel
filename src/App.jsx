@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuthContext } from './context/AuthContext';
 import LoginPage from './pages/LoginPage.jsx';
 import RegisterPage from './pages/RegisterPage.jsx';
@@ -8,6 +8,7 @@ import ChatPage from './pages/ChatPage.jsx';
 import GamePage from './pages/GamePage.jsx';
 import ProfilePage from './pages/ProfilePage.jsx';
 import LeaderboardPage from './pages/LeaderboardPage.jsx';
+import SearchPage from './pages/SearchPage.jsx';
 import Navbar from './components/Navbar.jsx';
 import { Toaster } from 'react-hot-toast';
 
@@ -15,6 +16,7 @@ function ProtectedRoute({ children }) {
   const { token } = useAuthContext();
   return token ? children : <Navigate to="/login" replace />;
 }
+
 
 function AppRoutes() {
   return (
@@ -72,6 +74,14 @@ function AppRoutes() {
         }
       />
       <Route
+        path="/search"
+        element={
+          <ProtectedRoute>
+            <SearchPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/game/:roomId"
         element={
           <ProtectedRoute>
@@ -94,11 +104,17 @@ function AppRoutes() {
   );
 }
 
+const AUTH_ROUTES = ['/login', '/register'];
+
 function AppContent() {
   const { token } = useAuthContext();
+  const location = useLocation();
+  const isAuthRoute = AUTH_ROUTES.includes(location.pathname);
+  const isGameRoute = location.pathname.startsWith('/game');
+  
   return (
     <>
-      {token && <Navbar />}
+      {token && !isAuthRoute && !isGameRoute && <Navbar />}
       <Toaster position="top-right" />
       <AppRoutes />
     </>

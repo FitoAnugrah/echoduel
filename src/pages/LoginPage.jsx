@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { FaMusic, FaEye, FaEyeSlash } from 'react-icons/fa';
 import { GoogleLogin } from '@react-oauth/google';
 import Button from '../components/Button';
 import { useAuthContext } from '../context/AuthContext';
+import api from '../services/api';
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -14,6 +15,15 @@ const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    const existingToken = localStorage.getItem('echoduel_token');
+    const existingUser = localStorage.getItem('echoduel_user');
+    if (existingToken && existingUser) {
+      navigate('/lobby', { replace: true });
+    }
+  }, [navigate]);
 
   const successMessage = location.state?.successMessage;
 
@@ -28,19 +38,11 @@ const LoginPage = () => {
 
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:3000/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
-      const data = await response.json();
-      
-      if (!response.ok) throw new Error(data.message || 'Login failed');
-
-      login(data.token, data.user);
+      const response = await api.post('/api/auth/login', { email, password });
+      login(response.data.token, response.data.user);
       navigate('/lobby');
     } catch (err) {
-      setError(err.message);
+      setError(err?.response?.data?.message || err.message || 'Login failed');
     } finally {
       setLoading(false);
     }
@@ -48,19 +50,11 @@ const LoginPage = () => {
 
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
-      const response = await fetch('http://localhost:3000/api/auth/google', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ credential: credentialResponse.credential }),
-      });
-      const data = await response.json();
-      
-      if (!response.ok) throw new Error(data.message || 'Google Login failed');
-
-      login(data.token, data.user);
+      const response = await api.post('/api/auth/google', { credential: credentialResponse.credential });
+      login(response.data.token, response.data.user);
       navigate('/lobby');
     } catch (err) {
-      setError(err.message);
+      setError(err?.response?.data?.message || err.message || 'Google Login failed');
     }
   };
 
@@ -68,10 +62,9 @@ const LoginPage = () => {
     <div className="flex min-h-screen items-center justify-center bg-[#e0e5ec] px-4 py-12">
       <div className="w-full max-w-md rounded-[2rem] bg-[#e0e5ec] p-8 shadow-neu">
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-white shadow-neu">
-            <FaMusic className="text-2xl text-[#a78bfa]" />
+          <div className="mx-auto mb-4 flex h-72 w-auto items-center justify-center">
+            <img src="/logo.png" alt="EchoDuel" className="h-64 w-auto object-contain" />
           </div>
-          <h1 className="text-3xl font-semibold text-[#4a4a6a]">EchoDuel</h1>
           <p className="mt-2 text-sm text-[#7b7b8d]">Login to continue the musical showdown.</p>
         </div>
 

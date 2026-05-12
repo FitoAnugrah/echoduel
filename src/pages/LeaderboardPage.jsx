@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { useAuthContext } from '../context/AuthContext';
 import { fetchLeaderboard } from '../services/leaderboardService';
+import { getAvatarUrl } from '../utils/avatar';
 import Button from '../components/Button';
 
 const medalStyles = {
@@ -82,7 +83,7 @@ const LeaderboardPage = () => {
             <div key={player.id} className="rounded-[2rem] bg-background p-5 shadow-neu">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <img src={player.avatar} alt={player.username} className="h-16 w-16 rounded-full object-cover" />
+                  <img src={getAvatarUrl(player.avatar, player.username)} alt={player.username} className="h-16 w-16 rounded-full object-cover" />
                   <div>
                     <p className="text-lg font-semibold text-slate-900">{player.username}</p>
                     <p className="text-sm text-slate-500">Score {player.score}</p>
@@ -137,7 +138,7 @@ const LeaderboardPage = () => {
                     <td className="whitespace-nowrap px-4 py-4 font-semibold text-slate-900">{player.rank}</td>
                     <td className="px-4 py-4">
                       <div className="flex items-center gap-3">
-                        <img src={player.avatar} alt={player.username} className="h-10 w-10 rounded-full object-cover" />
+                        <img src={getAvatarUrl(player.avatar, player.username)} alt={player.username} className="h-10 w-10 rounded-full object-cover" />
                         <div>
                           <p className="font-semibold text-slate-900">{player.username}</p>
                           <p className="text-xs text-slate-500">{player.name}</p>

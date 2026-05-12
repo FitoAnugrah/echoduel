@@ -3,6 +3,13 @@ import { disconnectSocket } from '../hooks/useSocket';
 
 const AuthContext = createContext(null);
 
+const resolveAvatarUrl = (avatar) => {
+  if (!avatar) return null;
+  if (avatar.startsWith('http')) return avatar;
+  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+  return `${apiUrl}${avatar}`;
+};
+
 export function AuthProvider({ children }) {
   const [token, setToken] = useState(() => localStorage.getItem('echoduel_token'));
   const [user, setUser] = useState(() => {
@@ -11,16 +18,23 @@ export function AuthProvider({ children }) {
   });
 
   const login = (newToken, userData) => {
+    const processedUser = { ...userData, avatar: resolveAvatarUrl(userData.avatar) };
     localStorage.setItem('echoduel_token', newToken);
-    localStorage.setItem('echoduel_user', JSON.stringify(userData));
+    localStorage.setItem('echoduel_user', JSON.stringify(processedUser));
     setToken(newToken);
-    setUser(userData);
+    setUser(processedUser);
   };
 
-  const updateUser = (userData) => {
-    const updatedUser = { ...user, ...userData };
-    localStorage.setItem('echoduel_user', JSON.stringify(updatedUser));
-    setUser(updatedUser);
+  const updateUser = (userData, newToken) => {
+    const mergedUser = { ...user, ...userData };
+    const processedUser = { ...mergedUser, avatar: resolveAvatarUrl(mergedUser.avatar) };
+    localStorage.setItem('echoduel_user', JSON.stringify(processedUser));
+    setUser(processedUser);
+    // If a new token was issued (e.g. after profile update), persist it
+    if (newToken) {
+      localStorage.setItem('echoduel_token', newToken);
+      setToken(newToken);
+    }
   };
 
   const logout = () => {

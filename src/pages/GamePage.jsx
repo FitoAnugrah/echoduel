@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { FaLightbulb, FaVolumeUp, FaTimes } from 'react-icons/fa';
 import Timer from '../components/Timer';
 import ScoreBoard from '../components/ScoreBoard';
@@ -17,6 +17,14 @@ const initialRoomState = {
   name: '',
   host: '',
   genre: '',
+  difficulty: '',
+  gameState: 'waiting',
+};
+
+const difficultyColors = {
+  Easy: 'bg-emerald-100 text-emerald-700',
+  Medium: 'bg-amber-100 text-amber-700',
+  Hard: 'bg-red-100 text-red-700',
 };
 
 const initialRoundState = {
@@ -34,6 +42,7 @@ const initialRoundState = {
 
 const GamePage = () => {
   const { roomId } = useParams();
+  const location = useLocation();
   const { token, user } = useAuthContext();
   const socket = useSocket();
   const navigate = useNavigate();
@@ -50,6 +59,7 @@ const GamePage = () => {
   const [scoreboardOpen, setScoreboardOpen] = useState(false);
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
   const [friendsList, setFriendsList] = useState([]);
+  const [hasAnsweredCorrectly, setHasAnsweredCorrectly] = useState(false);
 
   useEffect(() => {
     if (inviteModalOpen) {
@@ -65,6 +75,7 @@ const GamePage = () => {
     setInviteModalOpen(false);
   };
 
+  // ── Timer countdown for round ──────────────────────────────────────────────
   useEffect(() => {
     let interval = null;
     if (round.isActive && round.startTimestamp) {
@@ -81,6 +92,7 @@ const GamePage = () => {
     return () => clearInterval(interval);
   }, [round.isActive, round.startTimestamp, round.duration]);
 
+  // ── Audio playback control ─────────────────────────────────────────────────
   useEffect(() => {
     if (round.isActive && audioRef.current) {
       audioRef.current.currentTime = 0;
@@ -88,94 +100,35 @@ const GamePage = () => {
         // Autoplay may be blocked until user interaction.
       });
     }
+    // BUG-05 FIX: Pause audio when round ends
+    if (!round.isActive && audioRef.current) {
+      audioRef.current.pause();
+    }
   }, [round.audioUrl, round.isActive]);
 
-  useEffect(() => {
-    if (!USE_MOCK && socket) {
-      socket.emit('join-room', { roomId, token, user });
-      socket.on('room-joined', handleRoomJoined);
-      socket.on('game-start', handleGameStart);
-      socket.on('round-start', handleRoundStart);
-      socket.on('round-end', handleRoundEnd);
-      socket.on('score-update', handleScoreUpdate);
-      socket.on('game-end', handleGameEnd);
-    }
-
-    if (USE_MOCK) {
-      const timers = [];
-      timers.push(setTimeout(() => handleRoomJoined({ id: roomId, name: `EchoDuel Room ${roomId}`, host: 'Lyra', genre: 'K-Pop' }), 300));
-      timers.push(setTimeout(() => handleGameStart({ countdown: 5 }), 1300));
-      timers.push(setTimeout(() => handleRoundStart({ audioUrl: MOCK_AUDIO_URL, roundNumber: 1, totalRounds: 3, duration: 30, startTimestamp: Date.now(), coverArt: MOCK_COVER_ART }), 6500));
-      timers.push(setTimeout(() => handleScoreUpdate({ scores: [
-        { id: 'user_01', username: user?.username || 'You', avatar: user?.avatar, score: 850 },
-        { id: 'player_02', username: 'Lyra', avatar: '', score: 900 },
-        { id: 'player_03', username: 'Nova', avatar: '', score: 830 },
-      ] }), 10500));
-      timers.push(setTimeout(() => handleRoundEnd({ correctAnswer: 'Echo of Rhythm' }), 22000));
-      timers.push(setTimeout(() => handleScoreUpdate({ scores: [
-        { id: 'user_01', username: user?.username || 'You', avatar: user?.avatar, score: 930 },
-        { id: 'player_02', username: 'Lyra', avatar: '', score: 940 },
-        { id: 'player_03', username: 'Nova', avatar: '', score: 870 },
-      ] }), 23500));
-      timers.push(setTimeout(() => handleGameEnd({ finalScores: [
-        { id: 'player_02', username: 'Lyra', avatar: '', score: 1200 },
-        { id: 'user_01', username: user?.username || 'You', avatar: user?.avatar, score: 1150 },
-        { id: 'player_03', username: 'Nova', avatar: '', score: 980 },
-      ] }), 30000));
-
-      return () => timers.forEach(clearTimeout);
-    }
-
-    return () => {
-      if (socket) {
-        socket.emit('leave-room', { roomId });
-        socket.off('room-joined');
-        socket.off('game-start');
-        socket.off('round-start');
-        socket.off('round-end');
-        socket.off('score-update');
-        socket.off('game-end');
-      }
-    };
-  }, [socket, roomId, token, user]);
-
-  useEffect(() => {
-    setScoreFlashIds([]);
-  }, []);
-
-  const handleRoomJoined = (roomData) => {
-    setRoomData(roomData);
-    if (roomData.gameState === 'playing') {
-       setStatusMessage('Game is already in progress');
+  // ── Socket event handlers (using useCallback to avoid stale closures) ──────
+  const handleRoomJoined = useCallback((data) => {
+    setRoomData(data);
+    if (data.gameState === 'playing') {
+      setStatusMessage('Game is already in progress');
     } else {
-       setStatusMessage(roomData.host === (user?.username || socket?.id) ? 'You are the Host. Click Start Game when ready.' : 'Connected to room. Waiting for host to start.');
+      // We check host inside here using data.host
+      const currentUsername = user?.username;
+      const isHost = data.host === currentUsername;
+      setStatusMessage(
+        isHost
+          ? 'You are the Host. Click Start Game when ready.'
+          : 'Connected to room. Waiting for host to start.'
+      );
     }
-  };
+  }, [user?.username]);
 
-  const handleStartGame = () => {
-    if (socket && roomData.host === (user?.username || socket.id)) {
-      socket.emit('start-game', { roomId });
-    }
-  };
-
-  const handleGameStart = ({ countdown: nextCountdown }) => {
+  const handleGameStart = useCallback(({ countdown: nextCountdown }) => {
     setCountdown(nextCountdown ?? 5);
     setStatusMessage('Game starting soon');
-  };
+  }, []);
 
-  useEffect(() => {
-    if (countdown === null) return;
-    if (countdown <= 0) {
-      setCountdown(null);
-      setStatusMessage('Get ready for the first round');
-      return;
-    }
-
-    const timer = setTimeout(() => setCountdown((value) => Math.max((value ?? 0) - 1, 0)), 1000);
-    return () => clearTimeout(timer);
-  }, [countdown]);
-
-  const handleRoundStart = ({ audioUrl, roundNumber, totalRounds, duration, startTimestamp, coverArt, hint }) => {
+  const handleRoundStart = useCallback(({ audioUrl, roundNumber, totalRounds, duration, startTimestamp, coverArt, hint }) => {
     setRound({
       roundNumber,
       totalRounds,
@@ -189,18 +142,19 @@ const GamePage = () => {
       hint: hint || 'Listen closely to the lyrics!',
     });
     setCorrectAnswer('');
+    setHasAnsweredCorrectly(false);
     setStatusMessage(`Round ${roundNumber} / ${totalRounds} is live`);
     setHintOpen(false);
-  };
+  }, []);
 
-  const handleRoundEnd = ({ correctAnswer }) => {
-    setCorrectAnswer(correctAnswer);
-    setRound((prev) => ({ ...prev, isActive: false, trackName: correctAnswer }));
+  const handleRoundEnd = useCallback(({ correctAnswer: answer }) => {
+    setCorrectAnswer(answer);
+    setRound((prev) => ({ ...prev, isActive: false, trackName: answer }));
     setStatusMessage('Round ended — answer revealed');
-    setTimeout(() => setCorrectAnswer(''), 3000);
-  };
+    setTimeout(() => setCorrectAnswer(''), 5000);
+  }, []);
 
-  const handleScoreUpdate = ({ scores: nextScores }) => {
+  const handleScoreUpdate = useCallback(({ scores: nextScores }) => {
     setScores((prevScores) => {
       const flashes = nextScores
         .filter((next) => {
@@ -214,20 +168,137 @@ const GamePage = () => {
       }
       return nextScores;
     });
+  }, []);
+
+  const handleGameEnd = useCallback(({ finalScores }) => {
+    navigate('/leaderboard', { state: { finalScores } });
+  }, [navigate]);
+
+  const handleAnswerResult = useCallback(({ correct, points, alreadyAnswered }) => {
+    if (alreadyAnswered) {
+      toast('You already answered this round', { icon: '⚠️' });
+    } else if (correct) {
+      toast.success(`Correct! +${points} pts 🎉`);
+      setHasAnsweredCorrectly(true);
+    } else {
+      toast.error('Wrong answer, try again! ❌');
+    }
+  }, []);
+
+  // ── Socket connection & event binding ──────────────────────────────────────
+  // Store handlers in refs so the effect cleanup always removes the latest one
+  const handlersRef = useRef({});
+  handlersRef.current = {
+    handleRoomJoined,
+    handleGameStart,
+    handleRoundStart,
+    handleRoundEnd,
+    handleScoreUpdate,
+    handleGameEnd,
+    handleAnswerResult,
   };
 
-  const handleGameEnd = ({ finalScores }) => {
-    navigate('/leaderboard', { state: { finalScores } });
+  useEffect(() => {
+    if (!USE_MOCK && socket) {
+      // Wrapper functions that delegate to the latest handler via ref
+      const onRoomJoined = (data) => handlersRef.current.handleRoomJoined(data);
+      const onGameStart = (data) => handlersRef.current.handleGameStart(data);
+      const onRoundStart = (data) => handlersRef.current.handleRoundStart(data);
+      const onRoundEnd = (data) => handlersRef.current.handleRoundEnd(data);
+      const onScoreUpdate = (data) => handlersRef.current.handleScoreUpdate(data);
+      const onGameEnd = (data) => handlersRef.current.handleGameEnd(data);
+      const onAnswerResult = (data) => handlersRef.current.handleAnswerResult(data);
+      const onError = (data) => {
+        toast.error(data.message || 'An error occurred');
+        if (data.message === 'Room is full.') {
+          navigate('/lobby');
+        }
+      };
+
+      const fallbackName = location.state?.fallbackName;
+      const fallbackGenre = location.state?.fallbackGenre;
+      const fallbackDifficulty = location.state?.fallbackDifficulty;
+
+      socket.emit('join-room', { roomId, token, fallbackName, fallbackGenre, fallbackDifficulty });
+      socket.on('room-joined', onRoomJoined);
+      socket.on('game-start', onGameStart);
+      socket.on('round-start', onRoundStart);
+      socket.on('round-end', onRoundEnd);
+      socket.on('score-update', onScoreUpdate);
+      socket.on('game-end', onGameEnd);
+      socket.on('answer-result', onAnswerResult);
+      socket.on('game-error', onError);
+
+      return () => {
+        socket.emit('leave-room', { roomId });
+        socket.off('room-joined', onRoomJoined);
+        socket.off('game-start', onGameStart);
+        socket.off('round-start', onRoundStart);
+        socket.off('round-end', onRoundEnd);
+        socket.off('score-update', onScoreUpdate);
+        socket.off('game-end', onGameEnd);
+        socket.off('answer-result', onAnswerResult);
+        socket.off('game-error', onError);
+      };
+    }
+
+    if (USE_MOCK) {
+      const timers = [];
+      timers.push(setTimeout(() => handlersRef.current.handleRoomJoined({ id: roomId, name: `EchoDuel Room ${roomId}`, host: 'Lyra', genre: 'K-Pop', difficulty: 'Easy', gameState: 'waiting' }), 300));
+      timers.push(setTimeout(() => handlersRef.current.handleGameStart({ countdown: 5 }), 1300));
+      timers.push(setTimeout(() => handlersRef.current.handleRoundStart({ audioUrl: MOCK_AUDIO_URL, roundNumber: 1, totalRounds: 3, duration: 30, startTimestamp: Date.now(), coverArt: MOCK_COVER_ART }), 6500));
+      timers.push(setTimeout(() => handlersRef.current.handleScoreUpdate({ scores: [
+        { id: 'user_01', username: user?.username || 'You', avatar: user?.avatar, score: 850 },
+        { id: 'player_02', username: 'Lyra', avatar: '', score: 900 },
+        { id: 'player_03', username: 'Nova', avatar: '', score: 830 },
+      ] }), 10500));
+      timers.push(setTimeout(() => handlersRef.current.handleRoundEnd({ correctAnswer: 'Echo of Rhythm' }), 22000));
+      timers.push(setTimeout(() => handlersRef.current.handleGameEnd({ finalScores: [
+        { id: 'player_02', username: 'Lyra', avatar: '', score: 1200 },
+        { id: 'user_01', username: user?.username || 'You', avatar: user?.avatar, score: 1150 },
+        { id: 'player_03', username: 'Nova', avatar: '', score: 980 },
+      ] }), 30000));
+
+      return () => timers.forEach(clearTimeout);
+    }
+  }, [socket, roomId]);
+
+  // ── Countdown ticker ───────────────────────────────────────────────────────
+  useEffect(() => {
+    if (countdown === null) return;
+    if (countdown <= 0) {
+      setCountdown(null);
+      setStatusMessage('Get ready for the first round');
+      return;
+    }
+
+    const timer = setTimeout(() => setCountdown((value) => Math.max((value ?? 0) - 1, 0)), 1000);
+    return () => clearTimeout(timer);
+  }, [countdown]);
+
+  const handleStartGame = () => {
+    if (!socket) {
+      toast.error('Connection lost. Please refresh the page.');
+      return;
+    }
+    if (roomData.host === user?.username) {
+      socket.emit('start-game', { roomId });
+    }
   };
 
   const handleSubmitAnswer = (event) => {
     event.preventDefault();
     if (!answer.trim()) return;
+    if (!round.isActive) return;
+    if (hasAnsweredCorrectly) {
+      toast('You already got it right! Wait for the next round.', { icon: '✅' });
+      return;
+    }
     if (!USE_MOCK && socket) {
-      socket.emit('submit-answer', { roomId, answer });
+      socket.emit('submit-answer', { roomId, answer: answer.trim() });
     }
     setAnswer('');
-    setStatusMessage('Answer submitted');
+    setStatusMessage('Answer submitted — waiting for result...');
   };
 
   const displayedScores = useMemo(() => {
@@ -236,140 +307,185 @@ const GamePage = () => {
 
   return (
     <div className="min-h-screen bg-[#e0e5ec] text-[#4a4a6a]">
-      <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 lg:flex-row">
-        <main className="space-y-6 lg:w-2/3">
-          <div className="rounded-[2rem] bg-[#e0e5ec] p-6 shadow-neu">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-              <div>
-                <p className="text-sm uppercase tracking-[0.2em] text-slate-500">{roomData.genre || 'Genre'}</p>
-                <h1 className="mt-2 text-3xl font-semibold text-[#4a4a6a]">{roomData.name || `Room ${roomId}`}</h1>
-                <p className="mt-1 text-sm text-slate-500">Host: {roomData.host || 'Host'}</p>
+      <div className="mx-auto w-full max-w-7xl space-y-8 px-4 py-8 sm:px-6 lg:px-8">
+        
+        {/* ── HEADER SECTION ── */}
+        <div className="rounded-[2.5rem] bg-[#e0e5ec] p-6 shadow-neu sm:p-8">
+          <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+            <div className="flex-1">
+              <p className="text-xs font-extrabold uppercase tracking-[0.25em] text-[#a78bfa]">{roomData.genre || 'Genre'}</p>
+              <h1 className="mt-1 text-3xl font-extrabold tracking-tight text-[#4a4a6a] sm:text-4xl">{roomData.name || `Room ${roomId}`}</h1>
+              <div className="mt-3 flex items-center gap-4">
+                <p className="text-sm font-medium text-slate-500">Host: <span className="font-bold text-[#4a4a6a]">{roomData.host || 'Host'}</span></p>
+                {roomData.difficulty && (
+                  <span className={`rounded-full px-4 py-1.5 text-[10px] font-black uppercase tracking-widest shadow-neu-sm ${difficultyColors[roomData.difficulty] || 'bg-slate-100 text-slate-600'}`}>
+                    {roomData.difficulty}
+                  </span>
+                )}
               </div>
-              <div className="flex flex-col items-end gap-3 lg:flex-row lg:items-center">
-                <div className="flex items-center gap-2 rounded-full bg-[#e0e5ec] px-4 py-3 shadow-neu-sm text-sm font-semibold text-[#4a4a6a]">
-                  <FaVolumeUp /> {statusMessage}
-                </div>
-                <div className="flex flex-wrap items-center gap-3">
-                  {roomData.host === (user?.username || socket?.id) && countdown === null && round.roundNumber === 0 && (
-                    <>
-                      <button 
-                        onClick={() => setInviteModalOpen(true)}
-                        className="rounded-full bg-white px-6 py-3 text-sm font-semibold text-[#4a4a6a] shadow-neu hover:shadow-neu-sm"
-                      >
-                        Invite Friends
-                      </button>
-                      <button 
-                        onClick={handleStartGame}
-                        className="rounded-full bg-[#a78bfa] px-6 py-3 text-sm font-semibold text-white shadow-neu hover:bg-[#8b5cf6]"
-                      >
-                        Start Game
-                      </button>
-                    </>
-                  )}
-                </div>
+            </div>
+
+            <div className="flex flex-col items-stretch gap-5 md:items-end">
+              <div className="flex items-center gap-3 rounded-full bg-[#e0e5ec] px-6 py-3.5 text-sm font-bold text-[#4a4a6a] shadow-neu-inset">
+                <FaVolumeUp className="text-[#a78bfa]" /> {statusMessage}
+              </div>
+              
+              <div className="flex flex-wrap items-center justify-end gap-4">
+                <button
+                  onClick={() => navigate('/lobby')}
+                  className="rounded-full bg-[#e0e5ec] px-7 py-3.5 text-sm font-extrabold text-red-500 shadow-neu transition-all hover:text-red-600 hover:shadow-neu-sm"
+                >
+                  {roomData.host === user?.username ? 'Hentikan Permainan' : 'Keluar Permainan'}
+                </button>
+
+                {roomData.host === user?.username && countdown === null && round.roundNumber === 0 && (
+                  <>
+                    <button 
+                      onClick={() => setInviteModalOpen(true)}
+                      className="rounded-full bg-[#e0e5ec] px-7 py-3.5 text-sm font-extrabold text-[#4a4a6a] shadow-neu transition-all hover:shadow-neu-sm"
+                    >
+                      Invite Friends
+                    </button>
+                    <button 
+                      onClick={handleStartGame}
+                      className="rounded-full bg-[#a78bfa] px-8 py-3.5 text-sm font-extrabold text-white shadow-neu transition-all hover:bg-[#8b5cf6]"
+                    >
+                      Start Game
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           </div>
+        </div>
 
-          <div className="grid gap-6 lg:grid-cols-[1fr_0.95fr]">
-            <div className="space-y-6">
-              <div className="rounded-[2rem] bg-[#e0e5ec] p-6 shadow-neu">
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <p className="text-sm text-slate-500">Round {round.roundNumber} of {round.totalRounds}</p>
-                    <p className="mt-1 text-xl font-semibold text-[#4a4a6a]">Countdown</p>
-                  </div>
-                  <Timer duration={round.duration} remaining={round.remaining} startTimestamp={round.startTimestamp} />
+        {/* ── MAIN GAME GRID ── */}
+        <div className="grid gap-8 lg:grid-cols-12">
+          
+          {/* LEFT COLUMN: Game Area */}
+          <div className="space-y-8 lg:col-span-8">
+            
+            <div className="rounded-[2.5rem] bg-[#e0e5ec] p-6 shadow-neu sm:p-8">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">Round Status</p>
+                  <p className="mt-1 text-3xl font-black text-[#4a4a6a]">
+                    {round.roundNumber} <span className="text-xl font-semibold text-slate-400">/ {round.totalRounds}</span>
+                  </p>
+                </div>
+                <Timer duration={round.duration} remaining={round.remaining} startTimestamp={round.startTimestamp} />
+              </div>
+            </div>
+
+            <div className="overflow-hidden rounded-[3rem] bg-[#e0e5ec] p-5 shadow-neu">
+              <div className="relative overflow-hidden rounded-[2.5rem] bg-slate-900 shadow-inner">
+                <img
+                  src={round.coverArt || MOCK_COVER_ART}
+                  alt="Cover art"
+                  className={`h-[340px] w-full object-cover transition-all duration-[1500ms] ease-out ${round.isActive ? 'scale-110 blur-2xl' : 'scale-100 blur-0'}`}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+                <div className="absolute inset-0 flex flex-col justify-end p-8 text-white sm:p-10">
+                  <span className="text-xs font-black uppercase tracking-[0.3em] text-[#a78bfa] drop-shadow-md">Now Playing</span>
+                  <h2 className="mt-2 text-3xl font-black leading-tight drop-shadow-lg sm:text-4xl">{round.trackName}</h2>
                 </div>
               </div>
+              <div className="mt-5 rounded-[2.5rem] bg-[#e0e5ec] p-5 shadow-neu-inset">
+                <audio ref={audioRef} src={round.audioUrl} controls className="w-full" />
+                {!round.audioUrl && <p className="mt-2 text-center text-sm font-medium text-slate-500">Waiting for audio preview...</p>}
+              </div>
+            </div>
 
-              <div className="rounded-[2rem] bg-[#e0e5ec] p-6 shadow-neu">
-                <div className="relative overflow-hidden rounded-[2rem] bg-[#1f2937]">
-                  <img
-                    src={round.coverArt || MOCK_COVER_ART}
-                    alt="Cover art"
-                    className={`h-56 w-full object-cover transition duration-500 ${round.isActive ? 'blur-xl' : 'blur-0'}`}
-                  />
-                  <div className="absolute inset-0 bg-black/20" />
-                  <div className="absolute inset-0 flex flex-col justify-end p-5 text-white">
-                    <span className="text-sm uppercase tracking-[0.25em] text-white/70">Now Playing</span>
-                    <h2 className="mt-2 text-2xl font-semibold">{round.trackName}</h2>
-                  </div>
+            <form onSubmit={handleSubmitAnswer} className="rounded-[2.5rem] bg-[#e0e5ec] p-6 shadow-neu sm:p-8">
+              <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h3 className="text-xl font-extrabold text-[#4a4a6a]">Submit your answer</h3>
+                  <p className="mt-1 text-sm font-medium text-slate-500">Guess the correct song title.</p>
                 </div>
-                <div className="mt-5 rounded-[1.75rem] bg-[#e0e5ec] p-4 shadow-neu-inset">
-                  <audio ref={audioRef} src={round.audioUrl} controls className="w-full" />
-                  {!round.audioUrl && <p className="mt-3 text-sm text-slate-500">Waiting for the preview to load...</p>}
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setHintOpen((prev) => !prev)}
+                  className="flex items-center gap-2 rounded-full bg-[#e0e5ec] px-6 py-3 text-sm font-extrabold text-[#a78bfa] shadow-neu transition-all hover:shadow-neu-sm"
+                >
+                  <FaLightbulb /> Hint
+                </button>
               </div>
 
-              <form onSubmit={handleSubmitAnswer} className="space-y-4 rounded-[2rem] bg-[#e0e5ec] p-6 shadow-neu">
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <p className="text-sm font-semibold text-[#4a4a6a]">Submit your answer</p>
-                    <p className="text-xs text-slate-500">Type the song title for this round.</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setHintOpen((prev) => !prev)}
-                    className="rounded-full bg-[#f5f7fb] px-4 py-2 text-sm font-semibold text-[#4a4a6a] shadow-neu-sm"
-                  >
-                    <FaLightbulb className="inline mr-2" /> Hint
-                  </button>
+              {hintOpen && (
+                <div className="mb-6 rounded-[1.5rem] bg-amber-50 p-5 shadow-inner ring-1 ring-amber-100">
+                  <p className="text-sm font-bold text-amber-800">
+                    💡 <span className="ml-1 opacity-80">Hint:</span> {round.hint}
+                  </p>
                 </div>
-                {hintOpen && (
-                  <div className="rounded-3xl bg-white/80 p-4 text-sm text-slate-600 shadow-neu-sm">
-                    💡 <strong>Hint:</strong> {round.hint}
-                  </div>
-                )}
+              )}
+
+              <div className="flex flex-col gap-5 sm:flex-row">
                 <input
                   type="text"
                   value={answer}
                   onChange={(event) => setAnswer(event.target.value)}
-                  placeholder="Your guess here"
-                  className="w-full rounded-3xl bg-[#e0e5ec] px-4 py-4 text-[#4a4a6a] shadow-neu-inset outline-none"
+                  placeholder={hasAnsweredCorrectly ? 'You got it right! 🎉' : 'Type your guess here...'}
+                  disabled={hasAnsweredCorrectly || !round.isActive}
+                  className="flex-1 rounded-full bg-[#e0e5ec] px-8 py-5 text-lg font-bold text-[#4a4a6a] shadow-neu-inset outline-none transition-all placeholder:font-medium placeholder:text-slate-400 focus:ring-4 focus:ring-[#a78bfa]/30 disabled:cursor-not-allowed disabled:opacity-60"
                 />
-                <button type="submit" className="w-full rounded-full bg-[#a78bfa] px-6 py-3 text-sm font-semibold text-white shadow-neu hover:bg-[#8b5cf6]">
-                  Submit Answer
+                <button
+                  type="submit"
+                  disabled={hasAnsweredCorrectly || !round.isActive}
+                  className="whitespace-nowrap rounded-full bg-[#a78bfa] px-10 py-5 text-lg font-extrabold text-white shadow-neu transition-all hover:bg-[#8b5cf6] disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {hasAnsweredCorrectly ? 'Answered ✅' : 'Submit'}
                 </button>
-                {correctAnswer && <p className="text-center text-sm text-[#4a4a6a]">Correct answer: <span className="font-semibold text-[#a78bfa]">{correctAnswer}</span></p>}
-              </form>
-            </div>
+              </div>
 
-            <aside className="hidden lg:block">
-              <ScoreBoard scores={displayedScores} flashIds={scoreFlashIds} />
-            </aside>
+              {correctAnswer && (
+                <div className="mt-8 rounded-[1.5rem] bg-emerald-50 p-5 text-center shadow-inner ring-1 ring-emerald-100">
+                  <p className="text-sm font-bold text-emerald-800">
+                    The correct answer was: <span className="ml-2 text-lg font-black text-emerald-600">{correctAnswer}</span>
+                  </p>
+                </div>
+              )}
+            </form>
           </div>
-        </main>
 
-        <div className="lg:hidden">
-          <button
-            type="button"
-            onClick={() => setScoreboardOpen((prev) => !prev)}
-            className="mb-4 w-full rounded-full bg-[#a78bfa] px-6 py-3 text-sm font-semibold text-white shadow-neu hover:bg-[#8b5cf6]"
-          >
-            {scoreboardOpen ? 'Hide Scores' : 'View Scores'}
-          </button>
-          {scoreboardOpen && <ScoreBoard scores={displayedScores} flashIds={scoreFlashIds} />}
+          {/* RIGHT COLUMN: Scoreboard */}
+          <div className="flex flex-col gap-8 lg:col-span-4">
+            <div className="lg:hidden">
+              <button
+                type="button"
+                onClick={() => setScoreboardOpen((prev) => !prev)}
+                className="w-full rounded-full bg-[#e0e5ec] px-8 py-4 text-base font-extrabold text-[#a78bfa] shadow-neu transition-all hover:shadow-neu-sm"
+              >
+                {scoreboardOpen ? 'Hide Scoreboard' : 'Show Scoreboard'}
+              </button>
+            </div>
+            
+            <div className={`h-full ${scoreboardOpen ? 'block' : 'hidden lg:block'}`}>
+              <div className="sticky top-8">
+                <ScoreBoard scores={displayedScores} flashIds={scoreFlashIds} />
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
 
       {inviteModalOpen && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/30 px-4 py-6">
-          <div className="w-full max-w-md rounded-[2rem] bg-[#e0e5ec] p-6 shadow-neu">
-            <div className="mb-6 flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-[#4a4a6a]">Invite Friends</h2>
-              <button onClick={() => setInviteModalOpen(false)} className="rounded-full bg-[#f5f7fb] p-3 text-[#4a4a6a] shadow-neu-sm">
-                <FaTimes />
+        <div className="fixed inset-0 z-50 grid place-items-center bg-slate-900/40 px-4 py-6 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-[2.5rem] bg-[#e0e5ec] p-8 shadow-2xl">
+            <div className="mb-8 flex items-center justify-between">
+              <h2 className="text-2xl font-extrabold text-[#4a4a6a]">Invite Friends</h2>
+              <button onClick={() => setInviteModalOpen(false)} className="rounded-full bg-[#e0e5ec] p-4 text-[#4a4a6a] shadow-neu-sm transition-all hover:shadow-neu-inset">
+                <FaTimes className="text-lg" />
               </button>
             </div>
-            <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
+            <div className="max-h-72 space-y-4 overflow-y-auto pr-3">
               {friendsList.length > 0 ? friendsList.map(f => (
-                <div key={f.id} className="flex items-center justify-between bg-[#f5f7fb] p-3 rounded-2xl shadow-neu-sm">
-                  <span className="font-semibold text-[#4a4a6a]">{f.name}</span>
-                  <button onClick={() => handleInviteFriend(f.id)} className="text-xs bg-[#a78bfa] text-white px-3 py-1 rounded-full hover:bg-[#8b5cf6]">Invite</button>
+                <div key={f.id} className="flex items-center justify-between rounded-[2rem] bg-[#e0e5ec] p-4 shadow-neu-sm">
+                  <span className="font-bold text-[#4a4a6a]">{f.name}</span>
+                  <button onClick={() => handleInviteFriend(f.id)} className="rounded-full bg-[#a78bfa] px-5 py-2 text-xs font-black text-white shadow-neu-sm transition-all hover:bg-[#8b5cf6]">Invite</button>
                 </div>
               )) : (
-                <p className="text-sm text-center text-slate-500 py-4">No friends available to invite.</p>
+                <p className="py-6 text-center text-sm font-medium text-slate-500">No friends available to invite.</p>
               )}
             </div>
           </div>

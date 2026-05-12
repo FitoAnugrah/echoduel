@@ -2,9 +2,11 @@ import { useEffect, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useAuthContext } from '../context/AuthContext';
 import { updateProfile, changePassword } from '../services/authService';
+import api from '../services/api';
 import Button from '../components/Button';
 import InputField from '../components/InputField';
 import { FaCamera } from 'react-icons/fa';
+import { getAvatarUrl } from '../utils/avatar';
 
 const tabs = [
   { id: 'account', label: 'Account' },
@@ -18,7 +20,7 @@ const ProfilePage = ({ initialTab = 'account' }) => {
   const [activeTab, setActiveTab] = useState(initialTab);
   const [editMode, setEditMode] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [avatarPreview, setAvatarPreview] = useState(user?.avatar || '');
+  const [avatarPreview, setAvatarPreview] = useState(getAvatarUrl(user?.avatar, user?.name || user?.username));
   const [avatarFile, setAvatarFile] = useState(null);
   const fileInputRef = useRef(null);
   const [profile, setProfile] = useState({
@@ -54,7 +56,7 @@ const ProfilePage = ({ initialTab = 'account' }) => {
         chatMessages: user.notifications?.chatMessages ?? true,
       },
     });
-    setAvatarPreview(user.avatar || '');
+    setAvatarPreview(getAvatarUrl(user.avatar, user.name || user.username));
   }, [user]);
 
   useEffect(() => {
@@ -75,6 +77,25 @@ const ProfilePage = ({ initialTab = 'account' }) => {
   const handleSaveProfile = async () => {
     setLoading(true);
     try {
+      // Upload avatar first if a new file was selected
+      if (avatarFile) {
+        const formData = new FormData();
+        formData.append('avatar', avatarFile);
+        const avatarRes = await api.put('/api/auth/avatar', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        // Update local avatar preview with the server URL
+        const serverAvatarUrl = avatarRes.data?.user?.avatar;
+        const newAvatarToken = avatarRes.data?.token;
+        if (serverAvatarUrl) {
+          const fullUrl = getAvatarUrl(serverAvatarUrl, profile.name || profile.username);
+          setAvatarPreview(fullUrl);
+          updateUser({ avatar: fullUrl }, newAvatarToken);
+        }
+        setAvatarFile(null);
+      }
+
+      // Save text profile fields
       const payload = {
         name: profile.name,
         username: profile.username,
@@ -83,11 +104,11 @@ const ProfilePage = ({ initialTab = 'account' }) => {
         notifications: profile.notifications,
       };
       const response = await updateProfile(payload);
-      updateUser(response.user || payload);
+      updateUser(response.user || payload, response.token);
       toast.success('Profile updated successfully.');
       setEditMode(false);
     } catch (error) {
-      toast.error(error?.message || 'Failed to update profile.');
+      toast.error(error?.response?.data?.message || error?.message || 'Failed to update profile.');
     } finally {
       setLoading(false);
     }
@@ -101,7 +122,7 @@ const ProfilePage = ({ initialTab = 'account' }) => {
       toast.success('Password changed successfully.');
       setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
     } catch (error) {
-      toast.error(error?.message || 'Unable to change password.');
+      toast.error(error?.response?.data?.message || error?.message || 'Unable to change password.');
     } finally {
       setLoading(false);
     }
@@ -136,7 +157,7 @@ const ProfilePage = ({ initialTab = 'account' }) => {
                 <FaCamera />
               </button>
               <img
-                src={avatarPreview || user?.avatar || 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=400&q=80'}
+                src={avatarPreview}
                 alt={profile.name}
                 className="h-32 w-32 rounded-full border-8 border-[#e0e5ec] object-cover shadow-neu"
               />
@@ -220,6 +241,19 @@ const ProfilePage = ({ initialTab = 'account' }) => {
                   type="email"
                   disabled={!editMode}
                 />
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-slate-700">Favorite Genre</label>
+                  <select
+                    value={profile.favoriteGenre}
+                    onChange={(event) => setProfile((prev) => ({ ...prev, favoriteGenre: event.target.value }))}
+                    disabled={!editMode}
+                    className="w-full rounded-3xl border border-slate-200 bg-[#e0e5ec] px-5 py-3 text-sm text-slate-700 outline-none focus:ring-2 focus:ring-[#a78bfa]/30 disabled:opacity-60"
+                  >
+                    {['Pop Indo', 'Pop Barat', 'K-Pop', 'Rock', 'Jazz', 'Electronic'].map(g => (
+                      <option key={g} value={g}>{g}</option>
+                    ))}
+                  </select>
+                </div>
                 {!editMode && <p className="text-sm text-slate-500">Click Edit Profile to update your account details.</p>}
                 {editMode && (
                   <div className="flex flex-wrap gap-3">

@@ -6,23 +6,44 @@ const getColor = (percent) => {
   return '#ef4444';
 };
 
+/**
+ * Timer component — single source of truth.
+ *
+ * Priority order:
+ *  1. If `startTimestamp` is provided, compute remaining time from the wall clock
+ *     (accurate even after tab switches / re-renders).
+ *  2. Otherwise fall back to the `remaining` prop passed from the parent.
+ *
+ * This removes the previous dual-interval bug where two setInterval calls
+ * were fighting each other and causing flickering / incorrect values.
+ */
 const Timer = ({ duration, remaining, startTimestamp }) => {
-  const [localRemaining, setLocalRemaining] = useState(remaining ?? duration);
-
-  useEffect(() => {
-    if (!duration || remaining == null) return;
-    setLocalRemaining(remaining);
-  }, [duration, remaining]);
-
-  useEffect(() => {
-    if (!startTimestamp || !duration) return;
-    const interval = setInterval(() => {
+  const [localRemaining, setLocalRemaining] = useState(() => {
+    if (startTimestamp && duration) {
       const elapsed = Math.floor((Date.now() - startTimestamp) / 1000);
-      const next = Math.max(duration - elapsed, 0);
-      setLocalRemaining(next);
-    }, 250);
-    return () => clearInterval(interval);
-  }, [startTimestamp, duration]);
+      return Math.max(duration - elapsed, 0);
+    }
+    return remaining ?? duration ?? 0;
+  });
+
+  useEffect(() => {
+    // If we have a startTimestamp, drive the timer from the wall clock.
+    // This is the only interval — no second one.
+    if (startTimestamp && duration) {
+      const tick = () => {
+        const elapsed = Math.floor((Date.now() - startTimestamp) / 1000);
+        setLocalRemaining(Math.max(duration - elapsed, 0));
+      };
+      tick(); // immediate update
+      const id = setInterval(tick, 250);
+      return () => clearInterval(id);
+    }
+
+    // No startTimestamp — just mirror the `remaining` prop from the parent.
+    if (remaining != null) {
+      setLocalRemaining(remaining);
+    }
+  }, [startTimestamp, duration, remaining]);
 
   const normalized = useMemo(() => {
     if (!duration) return 0;

@@ -61,23 +61,34 @@ const LobbyPage = () => {
     event.preventDefault();
     setCreatingRoom(true);
 
-    const room = await createRoom({
-      host: user?.username || 'Player',
-      name: form.name || `${activeGenre} Room`,
-      genre: form.genre,
-      difficulty: form.difficulty,
-      maxPlayers: Number(form.maxPlayers),
-    });
+    try {
+      console.log("Frontend mengirim:", form.genre, form.difficulty);
+      const room = await createRoom({
+        name: form.name || `${form.genre} Room`,
+        genre: form.genre,
+        difficulty: form.difficulty,
+        maxPlayers: Number(form.maxPlayers),
+      });
 
-    setCreatingRoom(false);
-    setModalOpen(false);
-    setForm({ name: '', genre: 'Pop Indo', difficulty: 'Easy', maxPlayers: '2' });
-    navigate(`/game/${room.id}`);
+      setModalOpen(false);
+      setForm({ name: '', genre: 'Pop Indo', difficulty: 'Easy', maxPlayers: '2' });
+      navigate(`/game/${room.id}`, { state: { fallbackName: form.name || `${form.genre} Room`, fallbackGenre: form.genre, fallbackDifficulty: form.difficulty } });
+    } catch (err) {
+      const message = err?.response?.data?.message || 'Failed to create room. Please try again.';
+      toast.error(message);
+    } finally {
+      setCreatingRoom(false);
+    }
   };
 
   const handleJoin = async (roomId) => {
-    await joinRoom(roomId);
-    navigate(`/game/${roomId}`);
+    try {
+      await joinRoom(roomId);
+      navigate(`/game/${roomId}`);
+    } catch (err) {
+      const message = err?.response?.data?.message || 'Failed to join room.';
+      toast.error(message);
+    }
   };
 
   return (
