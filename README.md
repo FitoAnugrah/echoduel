@@ -62,3 +62,5 @@ Buka terminal baru lainnya, pastikan berada di folder utama proyek (echoduel), l
          npm run dev
 
 4.Buka tautan lokal yang diberikan oleh Vite (biasanya http://localhost:5173) di browser Anda.
+
+Terima kasih
